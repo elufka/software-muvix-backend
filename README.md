@@ -1,0 +1,1 @@
+Refactorizar arquitectura para lograr legibilidad,modularizacion y optimizacion
