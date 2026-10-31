@@ -1,8 +1,6 @@
     package com.muvix.domain.service;
 
-    import com.muvix.domain.model.Item;
-    import com.muvix.domain.model.Publication;
-    import com.muvix.domain.model.PublicationStatus;
+    import com.muvix.domain.model.catalogue.SellableItem;
     import com.muvix.domain.port.inbound.CreatePublicationUseCase;
     import com.muvix.domain.port.outbound.PublicationRepositoryPort;
 
@@ -18,35 +16,35 @@
         }
 
         @Override
-        public Publication execute(String title, String description, Integer quantity, BigDecimal price, List<Item> items) {
+        public SellableItem execute(String title, String description, Integer quantity, BigDecimal price, List<Item> items) {
             if (quantity == null || quantity <= 0) {
                 throw new IllegalArgumentException("La cantidad debe ser mayor a cero.");
             }
 
             if (price == null || price.compareTo(BigDecimal.ZERO) <= 0) {
-                throw new IllegalArgumentException("El precio debe ser mayor a cero.");
+                throw new IllegalArgumentException("El price debe ser mayor a cero.");
             }
 
             if (items == null || items.isEmpty()) {
                 throw new IllegalArgumentException("Item de publicacion requerido para crearla");
             }
-
-            Publication publication = new Publication(
+/* esta mal
+            SellableItem publication = new SellableItem(
                     null,
                     title,
                     description,
                     items,
                     quantity,
-                    PublicationStatus.AVAILABLE,
+                    SellableItem.State.AVAILABLE,
                     price,
                     LocalDateTime.now());
 
             if (items != null) {
-                for (Item item : items) {
+                for (SellableItem item : items) {
                     item.setPublication(publication);
                 }
             }
 
-            return publicationRepositoryPort.save(publication);
+            return publicationRepositoryPort.save(publication);*/
         }
     }

@@ -1,4 +1,7 @@
-package com.muvix.domain.model;
+package com.muvix.domain.model.negotiation;
+
+import com.muvix.domain.model.catalogue.SellableItem;
+import com.muvix.domain.model.exception.DomainException;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -25,13 +28,13 @@ public class Oferta {
     }
 
     /** Solo sobre publicaciones públicas y disponibles; el comprador no puede ser el vendedor. */
-    public static Oferta crear(ItemVendible item, Long compradorId, BigDecimal monto, Instant ahora) {
-        if (item.getVendedorId().equals(compradorId))
-            throw new DominioException("No podés ofertar por tus propios ítems");
-        if (!item.puedeComprarse())
-            throw new DominioException("El ítem no está disponible para comprar");
-        if (monto == null || monto.signum() <= 0 || monto.compareTo(item.getPrecio()) >= 0)
-            throw new DominioException("La oferta debe ser mayor a 0 y menor al precio de lista");
+    public static Oferta crear(SellableItem item, Long compradorId, BigDecimal monto, Instant ahora) {
+        if (item.getSellerId().equals(compradorId))
+            throw new DomainException("No podés ofertar por tus propios ítems");
+        if (!item.canBeBuyed())
+            throw new DomainException("El ítem no está disponible para comprar");
+        if (monto == null || monto.signum() <= 0 || monto.compareTo(item.getPrice()) >= 0)
+            throw new DomainException("La oferta debe ser mayor a 0 y menor al price de lista");
         return new Oferta(null, item.getId(), compradorId, monto, ahora, Estado.PENDIENTE);
     }
 
@@ -46,7 +49,7 @@ public class Oferta {
     }
 
     private void exigirPendiente() {
-        if (estado != Estado.PENDIENTE) throw new DominioException("La oferta ya fue resuelta");
+        if (estado != Estado.PENDIENTE) throw new DomainException("La oferta ya fue resuelta");
     }
 
     public Long getId() { return id; }

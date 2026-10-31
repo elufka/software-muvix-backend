@@ -31,7 +31,7 @@
   <li>📉 <b>Estrategia de Venta:</b>
     <ul>
       <li><b>Lotes:</b> Agrupa artículos relacionados (ej. la mesa con las sillas) para ofrecerlos como un combo con descuento.</li>
-      <li><b>Precio de Liquidación Total:</b> Activa un precio especial ultra rebajado por si un solo comprador decide llevarse absolutamente todo de una sola vez.</li>
+      <li><b>Precio de Liquidación Total:</b> Activa un price especial ultra rebajado por si un solo comprador decide llevarse absolutamente todo de una sola vez.</li>
       <li><b>Precios Dinámicos:</b> Configura rebajas automáticas que se aplican a medida que el reloj de la mudanza se acerca a cero.</li>
     </ul>
   </li>
@@ -54,8 +54,8 @@
   <br>
   <li>⚡ <b>Acción Inmediata (Sin Vueltas):</b>
     <ul>
-      <li><b>Comprar Ahora:</b> Adquiere el producto al precio de lista de forma directa.</li>
-      <li><b>Hacer una Oferta:</b> Propone un precio de regateo estructurado a través de un botón, el cual el vendedor puede aceptar o rechazar con un solo clic (sin chats intermedios).</li>
+      <li><b>Comprar Ahora:</b> Adquiere el producto al price de lista de forma directa.</li>
+      <li><b>Hacer una Oferta:</b> Propone un price de regateo estructurado a través de un botón, el cual el vendedor puede aceptar o rechazar con un solo clic (sin chats intermedios).</li>
       <li><b>Comprar Casa Completa:</b> Si es un revendedor o alguien que empieza de cero, puede presionar el botón <i>"Take It All"</i> para quedarse con todo el lote disponible.</li>
     </ul>
   </li>
