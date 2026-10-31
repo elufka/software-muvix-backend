@@ -1,0 +1,58 @@
+package com.muvix.domain.model;
+
+import java.math.BigDecimal;
+import java.time.Instant;
+
+/** Regateo estructurado: una oferta, un clic para aceptar o rechazar. Sin chat. */
+public class Oferta {
+
+    public enum Estado { PENDIENTE, ACEPTADA, RECHAZADA }
+
+    private final Long id;
+    private final Long itemId;
+    private final Long compradorId;
+    private final BigDecimal monto;
+    private final Instant creadaEn;
+    private Estado estado;
+
+    public Oferta(Long id, Long itemId, Long compradorId, BigDecimal monto, Instant creadaEn, Estado estado) {
+        this.id = id;
+        this.itemId = itemId;
+        this.compradorId = compradorId;
+        this.monto = monto;
+        this.creadaEn = creadaEn;
+        this.estado = estado;
+    }
+
+    /** El comprador no puede ser el vendedor del ítem y el monto debe ser menor al precio de lista. */
+    public static Oferta crear(ItemVendible item, Long compradorId, BigDecimal monto, Instant ahora) {
+        if (item.getVendedorId().equals(compradorId))
+            throw new DominioException("No podés ofertar por tus propios ítems");
+        if (!item.estaDisponible())
+            throw new DominioException("El ítem no está disponible");
+        if (monto == null || monto.signum() <= 0 || monto.compareTo(item.getPrecio()) >= 0)
+            throw new DominioException("La oferta debe ser mayor a 0 y menor al precio de lista");
+        return new Oferta(null, item.getId(), compradorId, monto, ahora, Estado.PENDIENTE);
+    }
+
+    public void aceptar() {
+        exigirPendiente();
+        estado = Estado.ACEPTADA;
+    }
+
+    public void rechazar() {
+        exigirPendiente();
+        estado = Estado.RECHAZADA;
+    }
+
+    private void exigirPendiente() {
+        if (estado != Estado.PENDIENTE) throw new DominioException("La oferta ya fue resuelta");
+    }
+
+    public Long getId() { return id; }
+    public Long getItemId() { return itemId; }
+    public Long getCompradorId() { return compradorId; }
+    public BigDecimal getMonto() { return monto; }
+    public Instant getCreadaEn() { return creadaEn; }
+    public Estado getEstado() { return estado; }
+}
