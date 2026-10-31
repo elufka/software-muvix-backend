@@ -1,70 +1,68 @@
 package com.muvix.domain.model;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Combo de productos con precio propio (descuento). Referencia a los productos por id
- * (tabla composicion_lotes). Un producto puede estar en N lotes.
+ * Publicación que agrupa productos bajo un precio PROPIO, sin relación con la suma de los
+ * precios individuales (puede ser mayor, menor o igual). precio 0 => lote privado.
  *
- * Reglas:
- *  - un lote contiene SOLO productos (no lotes anidados), todos del mismo evento y vendedor
- *  - mínimo 2 productos
+ * Un producto puede estar en N lotes. Solo contiene productos (no lotes anidados).
  *
- * La regla "si se vende un producto, los lotes que lo contienen dejan de estar disponibles"
- * involucra a varios aggregates: va en un servicio de dominio / caso de uso, no acá.
+ * Cómo se crea (lo orquesta el caso de uso, no el dominio):
+ *  - desde productos existentes: se pasan sus ids
+ *  - desde cero: el caso de uso crea primero los productos (públicos con precio, o privados
+ *    con precio 0/null) y los persiste; luego llama a Lote.crear con los productos ya con id.
  */
 public final class Lote extends ItemVendible {
 
     private final Set<Long> productoIds = new HashSet<>();
 
-    public Lote(Long id, Long eventoId, Long vendedorId, String titulo, String descripcion,
+    public Lote(Long id, Long vendedorId, String titulo, String descripcion,
                 BigDecimal precio, Estado estado, Set<Long> productoIds) {
-        super(id, eventoId, vendedorId, titulo, descripcion, precio, estado);
+        super(id, vendedorId, titulo, descripcion, precio, estado);
         if (productoIds != null) this.productoIds.addAll(productoIds);
     }
 
-    /**
-     * Factory: arma el lote a partir de productos ya cargados.
-     * El precio es el que defina el vendedor; si viene null se calcula como suma menos descuento.
-     */
-    public static Lote crear(Long eventoId, Long vendedorId, String titulo, String descripcion,
-                             Collection<Producto> productos, BigDecimal precio,
-                             BigDecimal descuentoSugeridoPct) {
+    public static Lote crear(Long vendedorId, String titulo, String descripcion,
+                             Collection<Producto> productos, BigDecimal precio) {
         if (productos == null || productos.size() < 2)
             throw new DominioException("Un lote necesita al menos 2 productos");
 
+        Set<Long> ids = new HashSet<>();
         for (Producto p : productos) {
-            if (!p.getEventoId().equals(eventoId) || !p.getVendedorId().equals(vendedorId))
-                throw new DominioException("Todos los productos deben ser del mismo evento y vendedor");
+            if (p.getId() == null) throw new DominioException("Los productos deben estar guardados antes de armar el lote");
+            if (!p.getVendedorId().equals(vendedorId))
+                throw new DominioException("Todos los productos deben ser del mismo vendedor");
             if (!p.estaDisponible())
                 throw new DominioException("El producto '" + p.getTitulo() + "' no está disponible");
+            ids.add(p.getId());
         }
-
-        BigDecimal precioFinal = precio != null ? precio : precioSugerido(productos, descuentoSugeridoPct);
-        Set<Long> ids = new HashSet<>();
-        productos.forEach(p -> ids.add(p.getId()));
-        return new Lote(null, eventoId, vendedorId, titulo, descripcion, precioFinal, Estado.DISPONIBLE, ids);
+        return new Lote(null, vendedorId, titulo, descripcion, precio, Estado.DISPONIBLE, ids);
     }
 
-    public static BigDecimal precioSugerido(Collection<Producto> productos, BigDecimal descuentoPct) {
-        BigDecimal suma = productos.stream().map(Producto::getPrecio)
+    /**
+     * Solo informativo para la UI ("comprando suelto pagarías X"). No restringe el precio del lote.
+     * Ignora productos privados (precio 0).
+     */
+    public static BigDecimal sumaPreciosIndividuales(Collection<Producto> productos) {
+        return productos.stream()
+                .filter(Producto::esPublica)
+                .map(Producto::getPrecio)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-        if (descuentoPct == null) return suma;
-        return suma.multiply(BigDecimal.valueOf(100).subtract(descuentoPct))
-                .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
     }
 
     public void agregarProducto(Producto p) {
-        if (!p.getEventoId().equals(eventoId) || !p.getVendedorId().equals(vendedorId))
-            throw new DominioException("El producto no pertenece a este evento/vendedor");
+        if (!p.getVendedorId().equals(vendedorId))
+            throw new DominioException("El producto no pertenece al mismo vendedor");
+        if (p.getId() == null) throw new DominioException("El producto debe estar guardado");
         productoIds.add(p.getId());
     }
 
     public void quitarProducto(Long productoId) {
+        if (!productoIds.contains(productoId)) return;
         if (productoIds.size() <= 2) throw new DominioException("Un lote necesita al menos 2 productos");
         productoIds.remove(productoId);
     }

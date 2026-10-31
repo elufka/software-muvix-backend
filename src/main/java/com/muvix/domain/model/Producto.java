@@ -4,23 +4,29 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Un producto puede estar:
+ *  - suelto y público         (precio > 0, en ningún lote)
+ *  - solo dentro de lote(s)   (precio 0 = privado)
+ *  - público Y dentro de lote(s)
+ * La pertenencia a lotes vive en Lote (composicion_lotes); el producto no conoce sus lotes.
+ */
 public final class Producto extends ItemVendible {
 
     private String categoria;
     private final List<String> imagenes = new ArrayList<>();
 
-    public Producto(Long id, Long eventoId, Long vendedorId, String titulo, String descripcion,
+    public Producto(Long id, Long vendedorId, String titulo, String descripcion,
                     BigDecimal precio, Estado estado, String categoria, List<String> imagenes) {
-        super(id, eventoId, vendedorId, titulo, descripcion, precio, estado);
+        super(id, vendedorId, titulo, descripcion, precio, estado);
         this.categoria = categoria;
         if (imagenes != null) this.imagenes.addAll(imagenes);
     }
 
-    /** Factory para "Cargar producto". Un producto suelto siempre necesita precio. */
-    public static Producto crear(Long eventoId, Long vendedorId, String titulo, String descripcion,
+    /** precio null o 0 => producto privado (típico al crearlo "solo para un lote"). */
+    public static Producto crear(Long vendedorId, String titulo, String descripcion,
                                  BigDecimal precio, String categoria, List<String> imagenes) {
-        if (precio == null || precio.signum() <= 0) throw new DominioException("El producto necesita un precio");
-        return new Producto(null, eventoId, vendedorId, titulo, descripcion, precio,
+        return new Producto(null, vendedorId, titulo, descripcion, precio,
                 Estado.DISPONIBLE, categoria, imagenes);
     }
 

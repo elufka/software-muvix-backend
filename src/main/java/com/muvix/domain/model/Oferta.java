@@ -24,12 +24,12 @@ public class Oferta {
         this.estado = estado;
     }
 
-    /** El comprador no puede ser el vendedor del ítem y el monto debe ser menor al precio de lista. */
+    /** Solo sobre publicaciones públicas y disponibles; el comprador no puede ser el vendedor. */
     public static Oferta crear(ItemVendible item, Long compradorId, BigDecimal monto, Instant ahora) {
         if (item.getVendedorId().equals(compradorId))
             throw new DominioException("No podés ofertar por tus propios ítems");
-        if (!item.estaDisponible())
-            throw new DominioException("El ítem no está disponible");
+        if (!item.puedeComprarse())
+            throw new DominioException("El ítem no está disponible para comprar");
         if (monto == null || monto.signum() <= 0 || monto.compareTo(item.getPrecio()) >= 0)
             throw new DominioException("La oferta debe ser mayor a 0 y menor al precio de lista");
         return new Oferta(null, item.getId(), compradorId, monto, ahora, Estado.PENDIENTE);
