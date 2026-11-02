@@ -1,4 +1,16 @@
 package com.muvix.domain.model.event;
 
-public class OfferAcceptedEvent {
+import java.math.BigDecimal;
+import java.time.Instant;
+
+public record OfferAcceptedEvent(
+    Long offerId,
+    Long itemId,
+    Long buyerId,
+    BigDecimal amount,
+    Instant occurredOn
+) implements DomainEvent {
+    public OfferAcceptedEvent(Long offerId, Long itemId, Long buyerId, BigDecimal amount) {
+        this(offerId, itemId, buyerId, amount, Instant.now());
+    }
 }

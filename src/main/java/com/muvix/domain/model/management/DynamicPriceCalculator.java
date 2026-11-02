@@ -2,7 +2,6 @@ package com.muvix.domain.model.management;
 
 import com.muvix.domain.model.catalogue.SellableItem;
 import com.muvix.domain.model.exception.DomainException;
-
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Duration;
@@ -11,28 +10,28 @@ import java.util.List;
 
 public class DynamicPriceCalculator {
 
-    public BigDecimal calcular(SellableItem item, Instant fechaLimiteVenta, List<DiscountRule> reglas, Instant ahora) {
+    public BigDecimal calculate(SellableItem item, Instant saleDeadline, List<DiscountRule> rules, Instant now) {
         if (!item.isPublic()) return BigDecimal.ZERO;
-        if (ahora.isAfter(fechaLimiteVenta)) {
-            throw new DomainException("El periodo de venta ha expirado");
+        if (now.isAfter(saleDeadline)) {
+            throw new DomainException("Sales period has expired");
         }
 
-        long diasRestantes = Duration.between(ahora, fechaLimiteVenta).toDays();
-        BigDecimal maxPorcentaje = BigDecimal.ZERO;
+        long daysRemaining = Duration.between(now, saleDeadline).toDays();
+        BigDecimal maxPercentage = BigDecimal.ZERO;
 
-        for (DiscountRule regla : reglas) {
-            if (diasRestantes <= regla.daysLeft()) {
-                if (regla.percentage().compareTo(maxPorcentaje) > 0) {
-                    maxPorcentaje = regla.percentage();
+        for (DiscountRule rule : rules) {
+            if (daysRemaining <= rule.daysLeft()) {
+                if (rule.percentage().compareTo(maxPercentage) > 0) {
+                    maxPercentage = rule.percentage();
                 }
             }
         }
 
-        if (maxPorcentaje.signum() == 0) return item.getPrice();
+        if (maxPercentage.signum() == 0) return item.getPrice();
 
-        BigDecimal descuentoFactor = BigDecimal.ONE.subtract(
-                maxPorcentaje.divide(new BigDecimal("100"), 4, RoundingMode.HALF_UP)
+        BigDecimal discountFactor = BigDecimal.ONE.subtract(
+                maxPercentage.divide(new BigDecimal("100"), 4, RoundingMode.HALF_UP)
         );
-        return item.getPrice().multiply(descuentoFactor).setScale(2, RoundingMode.HALF_UP);
+        return item.getPrice().multiply(discountFactor).setScale(2, RoundingMode.HALF_UP);
     }
 }
