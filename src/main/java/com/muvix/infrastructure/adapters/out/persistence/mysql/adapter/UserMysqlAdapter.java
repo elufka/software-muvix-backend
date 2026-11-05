@@ -12,7 +12,6 @@ import java.util.Optional;
 @Component
 public class UserMysqlAdapter implements UserRepositoryPort {
 
-    // CORREGIDO: Se inyecta la interfaz de Spring Data JPA, no el adaptador a sí mismo
     private final UserMysqlRepository userMysqlRepository;
 
     public UserMysqlAdapter(UserMysqlRepository userMysqlRepository) {
@@ -27,12 +26,12 @@ public class UserMysqlAdapter implements UserRepositoryPort {
     }
 
     @Override
-    public Optional<User> findById(Long id) { // CORREGIDO: Agregado <User>
+    public Optional<User> findById(Long id) {
         return userMysqlRepository.findById(id).map(this::toDomain);
     }
 
     @Override
-    public Optional<User> findByEmail(String email) { // CORREGIDO: Agregado <User>
+    public Optional<User> findByEmail(String email) {
         return userMysqlRepository.findByEmail(email).map(this::toDomain);
     }
 
@@ -51,12 +50,10 @@ public class UserMysqlAdapter implements UserRepositoryPort {
         entity.setName(domain.getName());
         entity.setEmail(domain.getEmail());
         entity.setPhone(domain.getPhone());
-        // Nota: Si tu objeto de Dominio (User) maneja 2FA o Mobbex, deberías mapearlos aquí también.
         return entity;
     }
 
     private User toDomain(UserJpaEntity entity) {
-        // Asegúrate de que el constructor de tu modelo de dominio 'User' coincida con estos parámetros
         return new User(
                 entity.getId(),
                 entity.getName(),
