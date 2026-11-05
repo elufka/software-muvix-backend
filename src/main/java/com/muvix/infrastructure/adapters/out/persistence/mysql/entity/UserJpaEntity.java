@@ -34,7 +34,18 @@ public class UserJpaEntity {
 
     public enum VerificationTierJpa { UNVERIFIED, BASIC_2FA, IDENTITY_VERIFIED }
 
-    // Getters y Setters
+    @Column(name = "mobbex_connect_id")
+    private String mobbexConnectId;
+
+    @Column(name = "mobbex_linked")
+    private boolean mobbexLinked;
+
+    // Getters y Setters mobbex
+    public String getMobbexConnectId() { return mobbexConnectId; }
+    public void setMobbexConnectId(String mobbexConnectId) { this.mobbexConnectId = mobbexConnectId; }
+    public boolean isMobbexLinked() { return mobbexLinked; }
+    public void setMobbexLinked(boolean mobbexLinked) { this.mobbexLinked = mobbexLinked; }
+    // Getters y Setters regular
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public String getName() { return name; }
