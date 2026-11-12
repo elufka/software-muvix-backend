@@ -6,7 +6,7 @@
   <h1>🏠 Muvix</h1>
   <p>
     <img src="https://img.shields.io/badge/Estado-En_Desarrollo-DD2D4A?style=for-the-badge" alt="Estado">
-    <img src="https://img.shields.io/badge/Versión-1.0.0-880D1E?style=for-the-badge" alt="Versión">
+    <img src="https://img.shields.io/badge/Versión-BETA-880D1E?style=for-the-badge" alt="Versión">
   </p>
   <p>
     <b>Vaciá tu casa rápido. Amueblá tu espacio barato. Sin estrés.</b>
