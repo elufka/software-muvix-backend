@@ -1,5 +1,6 @@
 package com.muvix.application.usecase.transaction;
 
+import com.muvix.application.port.in.transaction.ProcessMobbexWebhookUseCase;
 import com.muvix.application.port.out.persistence.EscrowAccountRepositoryPort;
 import com.muvix.application.port.out.persistence.OrderRepositoryPort;
 import com.muvix.domain.model.exception.DomainException;
@@ -11,7 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Map;
 
 @Service
-public class ProcessMobbexWebhookService {
+public class ProcessMobbexWebhookService implements ProcessMobbexWebhookUseCase {
 
     private final OrderRepositoryPort orderRepository;
     private final EscrowAccountRepositoryPort escrowRepository;

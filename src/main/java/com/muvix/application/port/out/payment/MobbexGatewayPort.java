@@ -7,6 +7,7 @@ public interface MobbexGatewayPort {
     record CheckoutRequest(String orderId, BigDecimal amount, String description, String returnUrl) {}
     record CheckoutResponse(String checkoutUrl, String mobbexPaymentId) {}
 
+
     /** Genera el link de pago en Mobbex en modo pre-autorización / retención */
     CheckoutResponse createCheckout(CheckoutRequest request);
 
@@ -15,4 +16,6 @@ public interface MobbexGatewayPort {
 
     /** Reembolsa el 100% de los fondos retenidos al comprador */
     void refundPayment(String mobbexOperationId);
+
+    String generateConnectUrl(String sellerReference, String returnUrl);
 }

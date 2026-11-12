@@ -1,7 +1,11 @@
 package com.muvix.domain.model.catalogue;
 
 import com.muvix.domain.model.exception.DomainException;
+import jakarta.persistence.Version;
+
 import java.math.BigDecimal;
+import java.util.List;
+import java.util.Set;
 
 public abstract sealed class SellableItem permits Product, Batch {
 
@@ -14,6 +18,8 @@ public abstract sealed class SellableItem permits Product, Batch {
     protected String description;
     protected BigDecimal price; // Price 0 = Private item
     protected State state;
+    @Version
+    private Long version; // ante problemas de OptimisticLockingFailureException o dos compradores reservando el mismo ítem a la vez
 
     protected SellableItem(Long id, Long sellerId, String title, String description, BigDecimal price, State state) {
         if (sellerId == null) throw new DomainException("Seller ID is required");
@@ -64,10 +70,24 @@ public abstract sealed class SellableItem permits Product, Batch {
         this.state = State.AVAILABLE;
     }
 
+    // Reconstruccion de sellableItem a Product usada
+    public static Product reconstitute(Long id, Long sellerId, String title, String description,
+                                       BigDecimal price, State state,
+                                       String category, List<String> images) {
+        return new Product(id, sellerId, title, description, price, state, category, images);
+    }
+
+    // Reconstruccion de sellableItem a Batch
+    public static Batch reconstitute(Long id, Long sellerId, String title, String description,
+                                     BigDecimal price, State state, Set<Long> products) {
+        return new Batch(id, sellerId, title, description, price, state, products);
+    }
+
     public Long getId() { return id; }
     public Long getSellerId() { return sellerId; }
     public String getTitle() { return title; }
     public String getDescription() { return description; }
     public BigDecimal getPrice() { return price; }
     public State getState() { return state; }
+    public Long getVersion() { return version; }
 }

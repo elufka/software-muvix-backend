@@ -1,5 +1,6 @@
 package com.muvix.application.usecase.transaction;
 
+import com.muvix.application.port.in.transaction.ReleaseEscrowUseCase;
 import com.muvix.application.port.out.payment.MobbexGatewayPort;
 import com.muvix.application.port.out.persistence.EscrowAccountRepositoryPort;
 import com.muvix.application.port.out.persistence.OrderRepositoryPort;
@@ -12,7 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 
 @Service
-public class ReleaseEscrowService {
+public class ReleaseEscrowService implements ReleaseEscrowUseCase {
 
     private final OrderRepositoryPort orderRepository;
     private final EscrowAccountRepositoryPort escrowRepository;
@@ -27,6 +28,7 @@ public class ReleaseEscrowService {
     }
 
     @Transactional
+    @Override
     public void releaseFunds(Long orderId, String mobbexOperationId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new DomainException("Pedido no encontrado"));

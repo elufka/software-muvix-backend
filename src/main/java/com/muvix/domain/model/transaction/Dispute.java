@@ -1,7 +1,7 @@
 package com.muvix.domain.model.transaction;
 
-import com.muvix.domain.event.DisputeOpenedEvent;
-import com.muvix.domain.event.DomainEvent;
+import com.muvix.domain.model.event.DisputeOpenedEvent;
+import com.muvix.domain.model.event.DomainEvent;
 import com.muvix.domain.model.exception.DomainException;
 
 import java.time.Duration;

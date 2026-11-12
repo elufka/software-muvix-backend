@@ -7,7 +7,7 @@ import java.util.Set;
 
 @Entity
 @DiscriminatorValue("PRODUCT")
-class ProductJpaEntity extends SellableItemJpaEntity {
+public class ProductJpaEntity extends SellableItemJpaEntity {
     private String category;
 
     @ElementCollection

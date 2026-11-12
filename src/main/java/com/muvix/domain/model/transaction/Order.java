@@ -1,7 +1,7 @@
 package com.muvix.domain.model.transaction;
 
-import com.muvix.domain.logistic.AuthorizedPickupPerson;
-import com.muvix.domain.logistic.PickupPin;
+import com.muvix.domain.model.logistic.AuthorizedPickupPerson;
+import com.muvix.domain.model.logistic.PickupPin;
 import com.muvix.domain.model.exception.DomainException;
 import java.math.BigDecimal;
 import java.time.Instant;

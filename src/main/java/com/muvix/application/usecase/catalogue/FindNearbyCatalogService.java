@@ -1,8 +1,7 @@
-package com.muvix.application.usecase.catalogue;
-
 import com.muvix.application.port.in.catalogue.FindNearbyCatalogUseCase;
 import com.muvix.application.port.out.location.LocationGatewayPort;
 import com.muvix.application.port.out.persistence.CatalogQueryPort;
+import com.muvix.domain.model.logistic.ZoneDetail;
 import com.muvix.infrastructure.adapters.out.persistence.cassandra.entity.CatalogItemCassandraEntity;
 import com.muvix.infrastructure.adapters.out.persistence.cassandra.entity.PublicBoxCassandraEntity;
 import org.springframework.stereotype.Service;
@@ -16,42 +15,68 @@ public class FindNearbyCatalogService implements FindNearbyCatalogUseCase {
     private final CatalogQueryPort catalogQueryPort;
     private final LocationGatewayPort locationGatewayPort;
 
-    public FindNearbyCatalogService(CatalogQueryPort catalogQueryPort,
-                                    LocationGatewayPort locationGatewayPort) {
+    public FindNearbyCatalogService(
+            CatalogQueryPort catalogQueryPort,
+            LocationGatewayPort locationGatewayPort
+    ) {
         this.catalogQueryPort = catalogQueryPort;
         this.locationGatewayPort = locationGatewayPort;
     }
 
     @Override
     public NearbyCatalogResponse findNearbyByCoordinates(GeoLocationQuery query) {
-        // 1. Invocación al servicio externo de geolocalización para mapear GPS -> Zona
-        String baseZone = locationGatewayPort.resolveZoneFromCoordinates(
-                new LocationGatewayPort.GeoCoordinates(query.latitude(), query.longitude())
+
+        ZoneDetail baseZone = locationGatewayPort.resolveZoneFromCoordinates(
+                query.latitude(),
+                query.longitude()
         );
 
-        // 2. Obtener zonas colindantes
-        List<String> zonesToSearch = locationGatewayPort.findNearbyZones(baseZone, query.radiusKm());
-        if (!zonesToSearch.contains(baseZone)) {
+        List<ZoneDetail> zonesToSearch = new ArrayList<>(
+                locationGatewayPort.findNearbyZones(
+                        query.latitude(),
+                        query.longitude(),
+                        query.radiusKm()
+                )
+        );
+
+        boolean baseZoneIncluded = zonesToSearch.stream()
+                .anyMatch(zone -> zone.zoneId().equals(baseZone.zoneId()));
+
+        if (!baseZoneIncluded) {
             zonesToSearch.add(baseZone);
         }
 
-        // 3. Consultar publicaciones y Boxes desnormalizadas en Cassandra para cada zona sin exponer direcciones exactas
         List<CatalogItemCassandraEntity> allItems = new ArrayList<>();
         List<PublicBoxCassandraEntity> allBoxes = new ArrayList<>();
 
-        for (String zone : zonesToSearch) {
-            allItems.addAll(catalogQueryPort.findByZone(zone));
-            allBoxes.addAll(catalogQueryPort.findBoxesByZone(zone));
+        for (ZoneDetail zone : zonesToSearch) {
+            allItems.addAll(catalogQueryPort.findByZone(zone.zoneId()));
+            allBoxes.addAll(catalogQueryPort.findBoxesByZone(zone.zoneId()));
         }
 
-        return new NearbyCatalogResponse(baseZone, allItems, allBoxes);
+        return new NearbyCatalogResponse(
+                baseZone.zoneId(),
+                allItems,
+                allBoxes
+        );
     }
 
     @Override
-    public DualZoneMapResponse findNearbyForRelocation(GeoLocationQuery origin, GeoLocationQuery destination) {
-        NearbyCatalogResponse originCatalog = findNearbyByCoordinates(origin);
-        NearbyCatalogResponse destinationCatalog = destination != null ? findNearbyByCoordinates(destination) : null;
+    public DualZoneMapResponse findNearbyForRelocation(
+            GeoLocationQuery origin,
+            GeoLocationQuery destination
+    ) {
+        NearbyCatalogResponse originCatalog =
+                findNearbyByCoordinates(origin);
 
-        return new DualZoneMapResponse(originCatalog, destinationCatalog);
+        NearbyCatalogResponse destinationCatalog =
+                destination != null
+                        ? findNearbyByCoordinates(destination)
+                        : null;
+
+        return new DualZoneMapResponse(
+                originCatalog,
+                destinationCatalog
+        );
     }
 }

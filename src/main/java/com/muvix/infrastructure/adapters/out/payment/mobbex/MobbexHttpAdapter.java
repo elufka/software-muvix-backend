@@ -1,7 +1,10 @@
+
 package com.muvix.infrastructure.adapters.out.payment.mobbex;
 
-import com.muvix.application.port.out.payment.MobbexGatewayPort;
+import com.muvix.application.port.out.payment.EscrowGatewayPort;
 import com.muvix.domain.model.exception.DomainException;
+import com.muvix.domain.model.transaction.EscrowProvider;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -10,26 +13,31 @@ import org.springframework.web.client.RestClient;
 import java.util.Map;
 
 @Component
-public class MobbexHttpAdapter implements MobbexGatewayPort {
+public class MobbexHttpAdapter implements EscrowGatewayPort {
 
     private final RestClient restClient;
 
     public MobbexHttpAdapter(
-            @Value("${mobbex.api-key:zJ8LFTBX6Ba8D611e9io13fDZAwj0QmKO1Hn1yIj}") String apiKey,
-            @Value("${mobbex.access-token:d31f0721-2f85-44e7-bcc6-15e19d1a53cc}") String accessToken,
-            @Value("${mobbex.test-mode:true}") boolean testMode) {
-
-        this.restClient = RestClient.builder()
-                .baseUrl("[suspicious link removed]")
+            RestClient.Builder restClientBuilder,
+            @Value("${mobbex.url}") String baseUrl,
+            @Value("${mobbex.api-key}") String apiKey,
+            @Value("${mobbex.access-token}") String accessToken
+    ) {
+        this.restClient = restClientBuilder
+                .baseUrl(baseUrl)
                 .defaultHeader("x-api-key", apiKey)
                 .defaultHeader("x-access-token", accessToken)
-                .defaultHeader("x-test", String.valueOf(testMode))
-                .defaultHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
                 .build();
     }
 
     @Override
+    public EscrowProvider getProvider() {
+        return EscrowProvider.MOBBEX;
+    }
+
+    @Override
     public CheckoutResponse createCheckout(CheckoutRequest request) {
+
         Map<String, Object> body = Map.of(
                 "total", request.amount(),
                 "currency", "ARS",
@@ -40,42 +48,50 @@ public class MobbexHttpAdapter implements MobbexGatewayPort {
 
         try {
             Map<?, ?> response = restClient.post()
-                    .uri("checkout")
+                    .uri("/checkout")
+                    .contentType(MediaType.APPLICATION_JSON)
                     .body(body)
                     .retrieve()
                     .body(Map.class);
 
-            Map<?, ?> data = (Map<?, ?>) response.get("data");
-            String checkoutUrl = (String) data.get("url");
-            String paymentId = (String) data.get("id");
+            if (response == null || !(response.get("data") instanceof Map<?, ?> data)) {
+                throw new DomainException("Respuesta inválida de Mobbex");
+            }
+
+            Object url = data.get("url");
+            Object id = data.get("id");
+
+            if (!(url instanceof String checkoutUrl)
+                    || !(id instanceof String paymentId)) {
+                throw new DomainException(
+                        "Mobbex no devolvió los datos del checkout"
+                );
+            }
 
             return new CheckoutResponse(checkoutUrl, paymentId);
+
+        } catch (DomainException e) {
+            throw e;
         } catch (Exception e) {
-            throw new DomainException("Error al comunicarse con la pasarela Mobbex: " + e.getMessage());
+            throw new DomainException(
+                    "Error al comunicarse con Mobbex"
+            );
         }
     }
 
     @Override
-    public void releaseFunds(String mobbexOperationId) {
-        try {
-            restClient.post()
-                    .uri("operations/{id}/capture", mobbexOperationId)
-                    .retrieve()
-                    .toBodilessEntity();
-        } catch (Exception e) {
-            throw new DomainException("No se pudieron liberar los fondos retenidos en Mobbex: " + e.getMessage());
-        }
+    public void releaseFunds(String externalOperationId) {
+        restClient.post()
+                .uri("/operations/{id}/capture", externalOperationId)
+                .retrieve()
+                .toBodilessEntity();
     }
 
     @Override
-    public void refundPayment(String mobbexOperationId) {
-        try {
-            restClient.post()
-                    .uri("operations/{id}/refund", mobbexOperationId)
-                    .retrieve()
-                    .toBodilessEntity();
-        } catch (Exception e) {
-            throw new DomainException("Error al procesar el reembolso en Mobbex: " + e.getMessage());
-        }
+    public void refundPayment(String externalOperationId) {
+        restClient.post()
+                .uri("/operations/{id}/refund", externalOperationId)
+                .retrieve()
+                .toBodilessEntity();
     }
 }

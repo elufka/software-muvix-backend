@@ -2,12 +2,14 @@ package com.muvix.domain.model.event;
 
 import java.time.Instant;
 
-public record UserVerifiedEvent(
-    Long userId,
-    String verificationTier,
-    Instant occurredOn
-) implements DomainEvent {
+public class UserVerifiedEvent extends DomainEvent {
+
+    private Long userId;
+    private String verificationTier;
+
+
     public UserVerifiedEvent(Long userId, String verificationTier) {
-        this(userId, verificationTier, Instant.now());
+        this.userId = userId;
+        this.verificationTier = verificationTier;
     }
 }

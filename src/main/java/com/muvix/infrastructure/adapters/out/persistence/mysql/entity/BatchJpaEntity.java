@@ -7,7 +7,7 @@ import java.util.Set;
 
 @Entity
 @DiscriminatorValue("BATCH")
-class BatchJpaEntity extends SellableItemJpaEntity {
+public class BatchJpaEntity extends SellableItemJpaEntity {
 
     @ElementCollection
     @CollectionTable(name = "batch_products", joinColumns = @JoinColumn(name = "batch_id"))
