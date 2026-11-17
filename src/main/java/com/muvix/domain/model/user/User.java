@@ -33,6 +33,14 @@ public class User {
         this.phone = phone;
     }
 
+    public void updateProfile(String name, String email, String phone) {
+        if (name == null || name.isBlank()) throw new DomainException("Name is required");
+        if (email == null || email.isBlank()) throw new DomainException("Email is required");
+        this.name = name;
+        this.email = email;
+        this.phone = phone;
+    }
+
     @Override
     public boolean equals(Object o) {
         return o instanceof User u && id != null && id.equals(u.id);

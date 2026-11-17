@@ -20,7 +20,14 @@ public class UserMysqlAdapter implements UserRepositoryPort {
 
     @Override
     public User save(User user) {
-        UserJpaEntity entity = UserPersistenceMapper.toEntity(user);
+        UserJpaEntity entity;
+        if (user.getId() == null) {
+            entity = UserPersistenceMapper.toEntity(user);
+        } else {
+            entity = userMysqlRepository.findById(user.getId())
+                    .orElseThrow(() -> new DomainException("Usuario no encontrado con ID: " + user.getId()));
+            UserPersistenceMapper.updateEntity(user, entity);
+        }
         UserJpaEntity saved = userMysqlRepository.save(entity);
         return UserPersistenceMapper.toDomain(saved);
     }
@@ -33,6 +40,11 @@ public class UserMysqlAdapter implements UserRepositoryPort {
     @Override
     public Optional<User> findByEmail(String email) {
         return userMysqlRepository.findByEmail(email).map(UserPersistenceMapper::toDomain);
+    }
+
+    @Override
+    public boolean existsByEmail(String email) {
+        return userMysqlRepository.existsByEmail(email);
     }
 
     @Override

@@ -28,12 +28,18 @@ public final class UserPersistenceMapper {
         }
 
         UserJpaEntity entity = new UserJpaEntity();
+        updateEntity(domain, entity);
+        return entity;
+    }
 
-        entity.setId(domain.getId());
+    /** Updates profile fields only, preserving credentials, 2FA, lifecycle and provider state. */
+    public static void updateEntity(User domain, UserJpaEntity entity) {
+        if (domain == null || entity == null) {
+            return;
+        }
+
         entity.setName(domain.getName());
         entity.setEmail(domain.getEmail());
         entity.setPhone(domain.getPhone());
-
-        return entity;
     }
 }

@@ -11,6 +11,8 @@ public interface MobbexGatewayPort {
     /** Genera el link de pago en Mobbex en modo pre-autorización / retención */
     CheckoutResponse createCheckout(CheckoutRequest request);
 
+    boolean isApprovedOperation(String reference, String operationId, java.math.BigDecimal amount);
+
     /** Libera los fondos retenidos al vendedor (Endpoint de Capture / Release) */
     void releaseFunds(String mobbexOperationId);
 

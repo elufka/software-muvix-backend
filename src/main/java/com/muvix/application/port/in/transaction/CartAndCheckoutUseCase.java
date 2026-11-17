@@ -18,7 +18,11 @@ public interface CartAndCheckoutUseCase {
             DeliveryMethod deliveryMethod
     ) {}
 
+    record CheckoutResult(Order order, String checkoutUrl) {}
+
     void addItemToCart(AddToCartCommand command);
 
     Order checkout(CheckoutCartCommand command);
+
+    CheckoutResult checkoutWithPayment(CheckoutCartCommand command);
 }

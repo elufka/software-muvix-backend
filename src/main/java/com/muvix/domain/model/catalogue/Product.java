@@ -24,4 +24,9 @@ public final class Product extends SellableItem {
 
     public String getCategory() { return category; }
     public List<String> getImages() { return List.copyOf(images); }
+    public void replaceProductDetails(String category, List<String> images) {
+        this.category = category;
+        this.images.clear();
+        if (images != null) this.images.addAll(images);
+    }
 }

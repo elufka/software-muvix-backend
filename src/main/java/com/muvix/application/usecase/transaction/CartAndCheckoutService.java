@@ -62,11 +62,17 @@ public class CartAndCheckoutService implements CartAndCheckoutUseCase {
         // 1. Obtener la Box del comprador asociada a la compra
         RelocationEvent buyerEvent = eventRepository.findById(command.targetEventId())
                 .orElseThrow(() -> new DomainException("Box no encontrada"));
+        if (!(buyerEvent instanceof PurchaseEvent) || !buyerEvent.getUserId().equals(command.buyerId())) {
+            throw new DomainException("Cart checkout requires the buyer's purchase event");
+        }
 
         // 2. Obtener ítems del carrito
         List<SellableItem> itemsToBuy = itemRepository.findCartItemsByBuyerId(command.buyerId());
         if (itemsToBuy.isEmpty()) {
             throw new DomainException("El carrito está vacío");
+        }
+        if (itemsToBuy.stream().map(SellableItem::getSellerId).distinct().count() != 1) {
+            throw new DomainException("An order can contain items from only one seller");
         }
 
         // Calcular total
@@ -108,5 +114,19 @@ public class CartAndCheckoutService implements CartAndCheckoutUseCase {
         });
 
         return savedOrder;
+    }
+
+    @Override
+    @Transactional
+    public CheckoutResult checkoutWithPayment(CheckoutCartCommand command) {
+        Order order = checkout(command);
+        EscrowAccount escrow = escrowRepository.findByOrderId(order.getId())
+                .orElseThrow(() -> new DomainException("Escrow account was not created"));
+        MobbexGatewayPort.CheckoutResponse payment = mobbexGateway.createCheckout(
+                new MobbexGatewayPort.CheckoutRequest(order.getId().toString(), order.getTotal(),
+                        "Muvix cart purchase", ""));
+        escrow.attachExternalOperationId(payment.mobbexPaymentId());
+        escrowRepository.save(escrow);
+        return new CheckoutResult(order, payment.checkoutUrl());
     }
 }

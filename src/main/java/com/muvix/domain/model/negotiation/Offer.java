@@ -58,6 +58,10 @@ public class Offer {
         this.status = Status.REJECTED;
     }
 
+    public static Offer restore(Long id, Long itemId, Long buyerId, BigDecimal amount, Instant createdAt, Status status) {
+        return new Offer(id, itemId, buyerId, amount, createdAt, status);
+    }
+
     private void requirePending() {
         if (status != Status.PENDING) throw new DomainException("Offer has already been resolved");
     }

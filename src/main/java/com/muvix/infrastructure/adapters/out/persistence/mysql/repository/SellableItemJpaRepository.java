@@ -7,4 +7,6 @@ import java.util.List;
 
 public interface SellableItemJpaRepository extends JpaRepository<SellableItemJpaEntity,Long> {
     List<SellableItemJpaEntity> findBySellerId(Long sellerId);
+
+    boolean existsBySellerIdAndState(Long sellerId, SellableItemJpaEntity.StateJpa state);
 }

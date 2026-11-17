@@ -1,3 +1,5 @@
+package com.muvix.application.usecase.catalogue;
+
 import com.muvix.application.port.in.catalogue.FindNearbyCatalogUseCase;
 import com.muvix.application.port.out.location.LocationGatewayPort;
 import com.muvix.application.port.out.persistence.CatalogQueryPort;

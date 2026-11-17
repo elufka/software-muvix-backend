@@ -2,7 +2,6 @@ package com.muvix.application.port.in.transaction;
 
 import com.muvix.domain.model.transaction.Order;
 
-import java.math.BigDecimal;
 import java.util.Set;
 
 public interface PlaceOrderUseCase {
@@ -11,9 +10,9 @@ public interface PlaceOrderUseCase {
 
     record TakeItAllPurchaseCommand(Long buyerId, Long eventId) {}
 
-    record AcceptOfferPurchaseCommand(Long buyerId, Long offerId) {}
+    record AcceptOfferPurchaseCommand(Long sellerId, Long offerId) {}
 
-    Order executeDirectPurchase(DirectPurchaseCommand command);
-    Order executeTakeItAllPurchase(TakeItAllPurchaseCommand command);
-    Order executeOfferPurchase(AcceptOfferPurchaseCommand command);
+    CartAndCheckoutUseCase.CheckoutResult executeDirectPurchase(DirectPurchaseCommand command);
+    CartAndCheckoutUseCase.CheckoutResult executeTakeItAllPurchase(TakeItAllPurchaseCommand command);
+    CartAndCheckoutUseCase.CheckoutResult executeOfferPurchase(AcceptOfferPurchaseCommand command);
 }

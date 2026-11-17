@@ -42,6 +42,10 @@ public abstract sealed class RelocationEvent permits SaleEvent, PurchaseEvent, F
     }
 
     public void complete() { this.status = Status.COMPLETED; }
+    public void cancel() {
+        if (status == Status.COMPLETED || status == Status.CANCELLED) throw new DomainException("Event cannot be cancelled in its current state");
+        this.status = Status.CANCELLED;
+    }
     public boolean isActive() { return status == Status.ACTIVE; }
 
     public Long getId() { return id; }

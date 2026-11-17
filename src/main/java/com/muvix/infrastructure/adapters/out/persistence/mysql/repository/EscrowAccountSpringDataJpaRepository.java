@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Collection;
 
 @Repository
 public interface EscrowAccountSpringDataJpaRepository
@@ -21,4 +22,6 @@ public interface EscrowAccountSpringDataJpaRepository
             EscrowAccountJpaEntity.EscrowStatusJpa status,
             Instant fundedBefore
     );
+
+    boolean existsByOrderIdInAndStatus(Collection<Long> orderIds, EscrowAccountJpaEntity.EscrowStatusJpa status);
 }

@@ -10,7 +10,7 @@ import java.util.Set;
 public abstract sealed class SellableItem permits Product, Batch {
 
     public enum Type { PRODUCT, BATCH }
-    public enum State { AVAILABLE, RESERVED, SOLD }
+    public enum State { AVAILABLE, RESERVED, SOLD, SOFT_DELETED }
 
     protected final Long id;
     protected final Long sellerId;
@@ -68,6 +68,20 @@ public abstract sealed class SellableItem permits Product, Batch {
     public void release() {
         if (state == State.SOLD) throw new DomainException("A sold item cannot be released");
         this.state = State.AVAILABLE;
+    }
+
+    public void softDelete() {
+        if (state == State.SOLD) throw new DomainException("A sold item cannot be deleted");
+        this.state = State.SOFT_DELETED;
+    }
+
+    public void replaceDetails(String title, String description, BigDecimal price) {
+        if (title == null || title.isBlank()) throw new DomainException("Title is required");
+        if (state == State.SOLD || state == State.RESERVED || state == State.SOFT_DELETED)
+            throw new DomainException("Unavailable items cannot be edited");
+        this.title = title;
+        this.description = description;
+        this.price = normalizePrice(price);
     }
 
     // Reconstruccion de sellableItem a Product usada

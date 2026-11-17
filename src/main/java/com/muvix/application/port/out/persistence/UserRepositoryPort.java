@@ -25,6 +25,8 @@ public interface UserRepositoryPort {
      */
     Optional<User> findByEmail(String email);
 
+    boolean existsByEmail(String email);
+
     /**
      * Vincula o desvincula la cuenta de Mobbex Connect de un usuario.
      */

@@ -14,7 +14,7 @@ public class OrderJpaEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "event_id", nullable = false)
+    @Column(name = "event_id")
     private Long eventId;
 
     @Column(name = "buyer_id", nullable = false)
@@ -84,19 +84,3 @@ public class OrderJpaEntity {
     public void setDeliveredAt(Instant deliveredAt) { this.deliveredAt = deliveredAt; }
 }
 
-@Embeddable
-class AuthorizedPickupPersonEmbeddable {
-    @Column(name = "authorized_person_name")
-    private String fullName;
-    @Column(name = "authorized_person_doc")
-    private String documentId;
-    @Column(name = "authorized_person_phone")
-    private String phone;
-
-    public String getFullName() { return fullName; }
-    public void setFullName(String fullName) { this.fullName = fullName; }
-    public String getDocumentId() { return documentId; }
-    public void setDocumentId(String documentId) { this.documentId = documentId; }
-    public String getPhone() { return phone; }
-    public void setPhone(String phone) { this.phone = phone; }
-}

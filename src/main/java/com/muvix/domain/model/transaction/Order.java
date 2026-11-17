@@ -30,7 +30,7 @@ public class Order {
 
     public Order(Long id, Long eventId, Long buyerId, Set<Long> itemIds, BigDecimal total,
                  Origin origin, DeliveryMethod deliveryMethod, Long slotId, Status status) {
-        if (eventId == null || buyerId == null) throw new DomainException("Event and Buyer are required");
+        if (buyerId == null) throw new DomainException("Buyer is required");
         if (itemIds == null || itemIds.isEmpty()) throw new DomainException("Order must contain at least one item");
         if (total == null || total.signum() <= 0) throw new DomainException("Invalid total amount");
 
@@ -43,6 +43,16 @@ public class Order {
         this.deliveryMethod = deliveryMethod == null ? DeliveryMethod.PICKUP : deliveryMethod;
         this.slotId = slotId;
         this.status = status == null ? Status.PENDING_SLOT : status;
+    }
+
+    public static Order restore(Long id, Long eventId, Long buyerId, Set<Long> itemIds, BigDecimal total,
+                                Origin origin, DeliveryMethod deliveryMethod, Long slotId, Status status,
+                                AuthorizedPickupPerson authorizedPickupPerson, String pickupPin, Instant deliveredAt) {
+        Order order = new Order(id, eventId, buyerId, itemIds, total, origin, deliveryMethod, slotId, status);
+        order.authorizedPickupPerson = authorizedPickupPerson;
+        order.pickupPin = pickupPin == null ? null : new PickupPin(pickupPin);
+        order.deliveredAt = deliveredAt;
+        return order;
     }
 
     public void setAuthorizedPickupPerson(AuthorizedPickupPerson person) {

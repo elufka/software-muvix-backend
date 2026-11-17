@@ -51,8 +51,25 @@ public final class Batch extends SellableItem {
 
     public void removeProduct(Long productId) {
         if (!productIds.contains(productId)) return;
-        if (productIds.size() <= 2) throw new DomainException("A batch must contain at least 2 products");
         productIds.remove(productId);
+        if (productIds.size() < 2) {
+            productIds.clear();
+            softDelete();
+        }
+    }
+
+    public void markProductsUnavailable() { softDelete(); }
+
+    public void replaceProducts(Set<Long> replacementIds) {
+        if (replacementIds == null || replacementIds.size() < 2) throw new DomainException("A batch requires at least 2 products");
+        if (getState() != State.AVAILABLE) throw new DomainException("Only an available batch can be edited");
+        productIds.clear();
+        productIds.addAll(replacementIds);
+    }
+
+    public void deleteBatch() {
+        productIds.clear();
+        softDelete();
     }
 
     public boolean contains(Long productId) { return productIds.contains(productId); }

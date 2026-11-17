@@ -17,7 +17,7 @@ public interface SchedulePickupSlotUseCase {
 
     record CounterProposeSlotCommand(
             Long orderId,
-            Long sellerId,
+            Long proposerId,
             Long slotId,
             Instant newStartTime,
             Instant newEndTime

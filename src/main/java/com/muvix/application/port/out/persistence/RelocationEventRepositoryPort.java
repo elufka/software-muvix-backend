@@ -18,6 +18,8 @@ public interface RelocationEventRepositoryPort {
 
     List<RelocationEvent> findByUserId(Long userId);
 
+    List<Long> findItemIdsByEventId(Long eventId);
+
     void linkItemToBox(Long boxId, Long itemId);
 
     void unlinkItemFromBox(Long boxId, Long itemId);

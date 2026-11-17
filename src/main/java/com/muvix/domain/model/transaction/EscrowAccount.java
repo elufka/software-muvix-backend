@@ -60,7 +60,7 @@ public class EscrowAccount {
 
     public void releaseToSeller(Instant deliveredAt, Instant now) {
 
-        if (status != EscrowStatus.HELD) {
+        if (status != EscrowStatus.HELD && status != EscrowStatus.DISPUTED) {
             throw new IllegalStateException(
                     "Escrow is not eligible for release"
             );
@@ -86,6 +86,19 @@ public class EscrowAccount {
         }
 
         this.status = EscrowStatus.REFUNDED_TO_BUYER;
+    }
+
+    public void markDisputed() {
+        if (status != EscrowStatus.HELD) {
+            throw new IllegalStateException("Only held funds can be marked as disputed");
+        }
+        this.status = EscrowStatus.DISPUTED;
+    }
+
+    public void attachExternalOperationId(String operationId) {
+        if (operationId == null || operationId.isBlank()) throw new IllegalArgumentException("External operation ID is required");
+        if (status != EscrowStatus.HELD) throw new IllegalStateException("Only held escrow can be linked to a payment");
+        this.externalOperationId = operationId;
     }
 
 

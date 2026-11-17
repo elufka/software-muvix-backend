@@ -4,6 +4,7 @@ import com.muvix.application.port.in.transaction.ReleaseEscrowUseCase;
 import com.muvix.application.port.in.transaction.RefundOrderUseCase;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.Map;
 
@@ -34,6 +35,7 @@ public class EscrowAccountController {
     }
 
     @PostMapping("/orders/{orderId}/release")
+    @PreAuthorize("hasRole('MODERATOR')")
     public ResponseEntity<Void> releaseEscrow(
             @PathVariable Long orderId,
             @RequestParam String mobbexOperationId
@@ -43,6 +45,7 @@ public class EscrowAccountController {
     }
 
     @PostMapping("/orders/{orderId}/refund")
+    @PreAuthorize("hasRole('MODERATOR')")
     public ResponseEntity<Void> refundOrder(
             @PathVariable Long orderId,
             @RequestParam String mobbexOperationId

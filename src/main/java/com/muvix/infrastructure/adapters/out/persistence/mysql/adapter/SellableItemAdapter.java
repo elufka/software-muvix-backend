@@ -89,6 +89,20 @@ public class SellableItemAdapter implements SellableItemRepositoryPort {
 
     @Override
     public void deleteById(Long id) {
-        itemRepo.deleteById(id);
+        SellableItem item = itemRepo.findById(id).map(SellableItemPersistenceMapper::toDomain)
+                .orElseThrow(() -> new DomainException("Sellable item not found: " + id));
+        if (item instanceof Batch batch) {
+            batch.deleteBatch();
+            save(batch);
+            return;
+        }
+        for (SellableItem candidate : findBySellerId(item.getSellerId())) {
+            if (candidate instanceof Batch batch && batch.getState() == SellableItem.State.AVAILABLE && batch.contains(id)) {
+                batch.removeProduct(id);
+                save(batch);
+            }
+        }
+        item.softDelete();
+        save(item);
     }
 }

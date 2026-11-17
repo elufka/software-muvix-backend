@@ -68,6 +68,9 @@ public class CreateBatchService implements CreateBatchUseCase {
     public Batch createFromExisting(CreateBatchFromExistingCommand command) {
         // 1. Obtener los productos guardados previamente desde MySQL
         List<Product> existingProducts = itemRepositoryPort.findProductsByIds(command.existingProductIds());
+        if (existingProducts.size() != command.existingProductIds().size()) {
+            throw new DomainException("One or more selected products do not exist");
+        }
 
         // 2. Validar pertenencia al mismo vendedor y disponibilidad
         Batch batch = Batch.create(

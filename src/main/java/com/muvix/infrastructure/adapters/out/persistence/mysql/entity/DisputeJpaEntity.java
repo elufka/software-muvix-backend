@@ -34,7 +34,13 @@ public class DisputeJpaEntity {
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
-    public enum StatusJpa { OPENED, UNDER_REVIEW, RESOLVED_REFUND, RESOLVED_REJECTED }
+    @Column(name = "evidence_requested_at")
+    private Instant evidenceRequestedAt;
+
+    @Column(name = "additional_evidence_rounds", nullable = false)
+    private int additionalEvidenceRounds;
+
+    public enum StatusJpa { OPENED, UNDER_REVIEW, NEEDS_EVIDENCE, RESOLVED_REFUND, RESOLVED_REJECTED }
 
     // Getters y Setters
     public Long getId() { return id; }
@@ -51,4 +57,8 @@ public class DisputeJpaEntity {
     public void setStatus(StatusJpa status) { this.status = status; }
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+    public Instant getEvidenceRequestedAt() { return evidenceRequestedAt; }
+    public void setEvidenceRequestedAt(Instant evidenceRequestedAt) { this.evidenceRequestedAt = evidenceRequestedAt; }
+    public int getAdditionalEvidenceRounds() { return additionalEvidenceRounds; }
+    public void setAdditionalEvidenceRounds(int additionalEvidenceRounds) { this.additionalEvidenceRounds = additionalEvidenceRounds; }
 }

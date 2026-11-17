@@ -31,7 +31,7 @@ public abstract class SellableItemJpaEntity {
     @Column(nullable = false)
     private StateJpa state;
 
-    public enum StateJpa { AVAILABLE, RESERVED, SOLD }
+    public enum StateJpa { AVAILABLE, RESERVED, SOLD, SOFT_DELETED }
 
     // Getters y Setters
     public Long getId() { return id; }
