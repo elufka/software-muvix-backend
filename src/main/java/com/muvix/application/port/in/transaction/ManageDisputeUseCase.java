@@ -7,6 +7,7 @@ public interface ManageDisputeUseCase {
     enum ModeratorDecision { REQUEST_MORE_EVIDENCE, REFUND_BUYER, RELEASE_TO_SELLER }
     record SubmitEvidenceCommand(Long disputeId, Long buyerId, List<String> evidenceImages) {}
     Dispute submitAdditionalEvidence(SubmitEvidenceCommand command);
+    Dispute getVisible(Long disputeId, Long actorId, boolean moderator);
     Dispute applyModeratorDecision(Long disputeId, ModeratorDecision decision);
     void expireEvidenceDeadlines();
 }

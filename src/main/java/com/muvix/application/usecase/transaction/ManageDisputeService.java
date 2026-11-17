@@ -35,6 +35,13 @@ public class ManageDisputeService implements ManageDisputeUseCase {
         return disputes.save(dispute);
     }
 
+    @Override @Transactional(readOnly = true)
+    public Dispute getVisible(Long disputeId, Long actorId, boolean moderator) {
+        Dispute dispute = find(disputeId);
+        if (!moderator && !dispute.getBuyerId().equals(actorId)) throw new DomainException("Only the buyer or a moderator can read this dispute");
+        return dispute;
+    }
+
     @Override @Transactional
     public Dispute applyModeratorDecision(Long disputeId, ModeratorDecision decision) {
         Dispute dispute = find(disputeId);

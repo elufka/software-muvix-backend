@@ -161,6 +161,13 @@ erDiagram
     string origin
     string status
   }
+  SHOPPING_CARTS {
+    bigint buyer_id PK
+  }
+  SHOPPING_CART_ITEMS {
+    bigint buyer_id FK
+    bigint item_id
+  }
   ORDER_ITEMS {
     bigint order_id FK
     bigint item_id
@@ -205,6 +212,7 @@ erDiagram
   SELLABLE_ITEMS ||--o{ PRODUCT_IMAGES : element_collection
   SELLABLE_ITEMS ||--o{ BATCH_PRODUCTS : element_collection
   ORDERS ||--o{ ORDER_ITEMS : element_collection
+  SHOPPING_CARTS ||--o{ SHOPPING_CART_ITEMS : element_collection
   DISPUTES ||--o{ DISPUTE_EVIDENCE : element_collection
 ```
 

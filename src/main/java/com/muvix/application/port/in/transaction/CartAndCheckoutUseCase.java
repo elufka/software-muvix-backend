@@ -4,6 +4,8 @@ import com.muvix.domain.model.transaction.Order;
 import com.muvix.domain.model.transaction.Order.DeliveryMethod;
 
 import java.util.Set;
+import java.util.List;
+import com.muvix.domain.model.catalogue.SellableItem;
 
 public interface CartAndCheckoutUseCase {
 
@@ -21,6 +23,9 @@ public interface CartAndCheckoutUseCase {
     record CheckoutResult(Order order, String checkoutUrl) {}
 
     void addItemToCart(AddToCartCommand command);
+    void removeItemFromCart(Long buyerId, Long itemId);
+
+    List<SellableItem> getCartItems(Long buyerId);
 
     Order checkout(CheckoutCartCommand command);
 

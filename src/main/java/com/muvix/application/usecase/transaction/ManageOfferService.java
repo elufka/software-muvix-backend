@@ -16,6 +16,12 @@ public class ManageOfferService implements ManageOfferUseCase {
         SellableItem item=items.findById(command.itemId()).orElseThrow(()->new DomainException("Sellable item not found"));
         return offers.save(Offer.create(item,command.buyerId(),command.amount(),clock.instant()));
     }
+    @Override @Transactional(readOnly=true) public Offer get(Long offerId,Long actorId){
+        Offer offer=offers.findById(offerId).orElseThrow(()->new DomainException("Offer not found"));
+        SellableItem item=items.findById(offer.getItemId()).orElseThrow(()->new DomainException("Sellable item not found"));
+        if(!offer.getBuyerId().equals(actorId)&&!item.getSellerId().equals(actorId))throw new DomainException("Only offer participants can read it");
+        return offer;
+    }
     @Override @Transactional public Offer reject(Long offerId,Long sellerId){
         Offer offer=offers.findById(offerId).orElseThrow(()->new DomainException("Offer not found"));
         SellableItem item=items.findById(offer.getItemId()).orElseThrow(()->new DomainException("Sellable item not found"));

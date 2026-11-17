@@ -36,6 +36,13 @@ public class DisputeController {
                 new ManageDisputeUseCase.SubmitEvidenceCommand(disputeId, Long.valueOf(jwt.getSubject()), evidenceImages)));
     }
 
+    @GetMapping("/{disputeId}")
+    public ResponseEntity<Dispute> get(@AuthenticationPrincipal Jwt jwt,@PathVariable Long disputeId){
+        java.util.List<String> roles=jwt.getClaimAsStringList("roles");
+        boolean moderator=roles!=null&&roles.contains("MODERATOR");
+        return ResponseEntity.ok(manageDisputeUseCase.getVisible(disputeId,Long.valueOf(jwt.getSubject()),moderator));
+    }
+
     @PostMapping("/{disputeId}/moderator-decision")
     @PreAuthorize("hasRole('MODERATOR')")
     public ResponseEntity<Dispute> moderatorDecision(@PathVariable Long disputeId,

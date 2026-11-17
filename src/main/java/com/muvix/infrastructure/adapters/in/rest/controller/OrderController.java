@@ -2,6 +2,7 @@ package com.muvix.infrastructure.adapters.in.rest.controller;
 
 import com.muvix.application.port.in.transaction.CartAndCheckoutUseCase;
 import com.muvix.application.port.in.transaction.PlaceOrderUseCase;
+import com.muvix.application.port.in.transaction.GetOrderUseCase;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,11 +20,13 @@ public class OrderController {
 
     private final PlaceOrderUseCase placeOrderUseCase;
     private final CartAndCheckoutUseCase cartAndCheckoutUseCase;
+    private final GetOrderUseCase getOrderUseCase;
 
     public OrderController(PlaceOrderUseCase placeOrderUseCase,
-                           CartAndCheckoutUseCase cartAndCheckoutUseCase) {
+                           CartAndCheckoutUseCase cartAndCheckoutUseCase, GetOrderUseCase getOrderUseCase) {
         this.placeOrderUseCase = placeOrderUseCase;
         this.cartAndCheckoutUseCase = cartAndCheckoutUseCase;
+        this.getOrderUseCase = getOrderUseCase;
     }
 
     @PostMapping("/direct")
@@ -45,6 +48,22 @@ public class OrderController {
     public ResponseEntity<Void> addItemToCart(@AuthenticationPrincipal Jwt jwt,@RequestParam Long itemId) {
         cartAndCheckoutUseCase.addItemToCart(new CartAndCheckoutUseCase.AddToCartCommand(userId(jwt), itemId));
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/cart/items")
+    public ResponseEntity<java.util.List<com.muvix.domain.model.catalogue.SellableItem>> getCart(@AuthenticationPrincipal Jwt jwt){
+        return ResponseEntity.ok(cartAndCheckoutUseCase.getCartItems(userId(jwt)));
+    }
+
+    @DeleteMapping("/cart/items/{itemId}")
+    public ResponseEntity<Void> removeCartItem(@AuthenticationPrincipal Jwt jwt,@PathVariable Long itemId){
+        cartAndCheckoutUseCase.removeItemFromCart(userId(jwt),itemId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{orderId}")
+    public ResponseEntity<Order> getOrder(@AuthenticationPrincipal Jwt jwt,@PathVariable Long orderId){
+        return ResponseEntity.ok(getOrderUseCase.get(orderId,userId(jwt)));
     }
 
     private static Long userId(Jwt jwt){return Long.valueOf(jwt.getSubject());}

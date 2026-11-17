@@ -2,6 +2,7 @@ package com.muvix.application.usecase.transaction;
 
 import com.muvix.application.port.in.transaction.CartAndCheckoutUseCase;
 import com.muvix.application.port.in.transaction.PlaceOrderUseCase;
+import com.muvix.application.port.out.event.EventPublisherPort;
 import com.muvix.application.port.out.payment.MobbexGatewayPort;
 import com.muvix.application.port.out.persistence.EscrowAccountRepositoryPort;
 import com.muvix.application.port.out.persistence.OrderRepositoryPort;
@@ -32,16 +33,18 @@ public class PlaceOrderService implements PlaceOrderUseCase {
     private final EscrowAccountRepositoryPort escrows;
     private final MobbexGatewayPort mobbex;
     private final OfferRepositoryPort offers;
+    private final EventPublisherPort eventPublisher;
 
     public PlaceOrderService(SellableItemRepositoryPort items, RelocationEventRepositoryPort events,
                              OrderRepositoryPort orders, EscrowAccountRepositoryPort escrows,
-                             MobbexGatewayPort mobbex, OfferRepositoryPort offers) {
+                             MobbexGatewayPort mobbex, OfferRepositoryPort offers, EventPublisherPort eventPublisher) {
         this.items = items;
         this.events = events;
         this.orders = orders;
         this.escrows = escrows;
         this.mobbex = mobbex;
         this.offers = offers;
+        this.eventPublisher = eventPublisher;
     }
 
     @Override
@@ -89,6 +92,7 @@ public class PlaceOrderService implements PlaceOrderUseCase {
         if (!item.getSellerId().equals(command.sellerId())) throw new DomainException("Only the seller can accept this offer");
         offer.accept();
         offers.save(offer);
+        eventPublisher.publishAll(offer.getDomainEvents());
         return checkout(offer.getBuyerId(), null, List.of(item), Order.Origin.ACCEPTED_OFFER,
                 offer.getAmount(), "Muvix accepted offer " + offer.getId());
     }

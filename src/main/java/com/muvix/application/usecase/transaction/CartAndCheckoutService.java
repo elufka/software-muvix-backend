@@ -6,11 +6,11 @@ import com.muvix.application.port.out.persistence.EscrowAccountRepositoryPort;
 import com.muvix.application.port.out.persistence.OrderRepositoryPort;
 import com.muvix.application.port.out.persistence.RelocationEventRepositoryPort;
 import com.muvix.application.port.out.persistence.SellableItemRepositoryPort;
+import com.muvix.application.port.out.persistence.ShoppingCartRepositoryPort;
 import com.muvix.domain.model.catalogue.SellableItem;
 import com.muvix.domain.model.exception.DomainException;
 import com.muvix.domain.model.management.PurchaseEvent;
 import com.muvix.domain.model.management.RelocationEvent;
-import com.muvix.domain.model.management.SaleEvent;
 import com.muvix.domain.model.transaction.EscrowAccount;
 import com.muvix.domain.model.transaction.Order;
 import org.springframework.stereotype.Service;
@@ -28,17 +28,19 @@ public class CartAndCheckoutService implements CartAndCheckoutUseCase {
     private final OrderRepositoryPort orderRepository;
     private final EscrowAccountRepositoryPort escrowRepository;
     private final MobbexGatewayPort mobbexGateway;
+    private final ShoppingCartRepositoryPort cartRepository;
 
     public CartAndCheckoutService(SellableItemRepositoryPort itemRepository,
                                   RelocationEventRepositoryPort eventRepository,
                                   OrderRepositoryPort orderRepository,
                                   EscrowAccountRepositoryPort escrowRepository,
-                                  MobbexGatewayPort mobbexGateway) {
+                                  MobbexGatewayPort mobbexGateway, ShoppingCartRepositoryPort cartRepository) {
         this.itemRepository = itemRepository;
         this.eventRepository = eventRepository;
         this.orderRepository = orderRepository;
         this.escrowRepository = escrowRepository;
         this.mobbexGateway = mobbexGateway;
+        this.cartRepository = cartRepository;
     }
 
     @Override
@@ -53,18 +55,27 @@ public class CartAndCheckoutService implements CartAndCheckoutUseCase {
             throw new DomainException("No puedes agregar tus propios productos al carrito");
         }
 
-        // Lógica de persistencia en sesión/Redis del Carrito
+        cartRepository.addItem(command.buyerId(), command.itemId());
+    }
+
+    @Override
+    public List<SellableItem> getCartItems(Long buyerId) {
+        return itemRepository.findCartItemsByBuyerId(buyerId);
+    }
+
+    @Override
+    public void removeItemFromCart(Long buyerId, Long itemId) {
+        cartRepository.removeItem(buyerId, itemId);
     }
 
     @Override
     @Transactional
     public Order checkout(CheckoutCartCommand command) {
         // 1. Obtener la Box del comprador asociada a la compra
-        RelocationEvent buyerEvent = eventRepository.findById(command.targetEventId())
-                .orElseThrow(() -> new DomainException("Box no encontrada"));
-        if (!(buyerEvent instanceof PurchaseEvent) || !buyerEvent.getUserId().equals(command.buyerId())) {
-            throw new DomainException("Cart checkout requires the buyer's purchase event");
-        }
+        RelocationEvent buyerEvent = command.targetEventId() == null ? null : eventRepository.findById(command.targetEventId())
+                .orElseThrow(() -> new DomainException("Purchase event not found"));
+        if (buyerEvent != null && (!(buyerEvent instanceof PurchaseEvent) || !buyerEvent.getUserId().equals(command.buyerId())))
+            throw new DomainException("The optional event must be the buyer's purchase event");
 
         // 2. Obtener ítems del carrito
         List<SellableItem> itemsToBuy = itemRepository.findCartItemsByBuyerId(command.buyerId());
@@ -85,7 +96,7 @@ public class CartAndCheckoutService implements CartAndCheckoutUseCase {
         // 3. Crear el Pedido (Order)
         Order order = new Order(
                 null,
-                buyerEvent.getId(),
+                buyerEvent == null ? null : buyerEvent.getId(),
                 command.buyerId(),
                 itemIds,
                 totalAmount,
@@ -94,12 +105,6 @@ public class CartAndCheckoutService implements CartAndCheckoutUseCase {
                 null,
                 Order.Status.PENDING_SLOT
         );
-
-        // ===== REGLA CONTEXTUAL DE LOGÍSTICA =====
-        // Si el usuario SOLO tiene una Box de Venta (o ninguna Box de Compra), no se habilita la logística de fechas de ingreso
-        if (buyerEvent instanceof SaleEvent) {
-            // El pedido se completa directamente como retiro puntual sin rango de fechas de llegada
-        }
 
         Order savedOrder = orderRepository.save(order);
 
@@ -127,6 +132,7 @@ public class CartAndCheckoutService implements CartAndCheckoutUseCase {
                         "Muvix cart purchase", ""));
         escrow.attachExternalOperationId(payment.mobbexPaymentId());
         escrowRepository.save(escrow);
+        cartRepository.clear(command.buyerId());
         return new CheckoutResult(order, payment.checkoutUrl());
     }
 }

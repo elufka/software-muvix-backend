@@ -34,5 +34,9 @@ public class OfferController {
     public ResponseEntity<Offer> reject(@AuthenticationPrincipal Jwt jwt, @PathVariable Long offerId) {
         return ResponseEntity.ok(manageOffers.reject(offerId, Long.valueOf(jwt.getSubject())));
     }
+    @GetMapping("/{offerId}")
+    public ResponseEntity<Offer> get(@AuthenticationPrincipal Jwt jwt,@PathVariable Long offerId){
+        return ResponseEntity.ok(manageOffers.get(offerId,Long.valueOf(jwt.getSubject())));
+    }
     public record CreateOfferRequest(Long itemId, BigDecimal amount) {}
 }

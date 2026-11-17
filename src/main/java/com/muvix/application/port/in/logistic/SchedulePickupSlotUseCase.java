@@ -24,6 +24,7 @@ public interface SchedulePickupSlotUseCase {
     ) {}
 
     PickupSlot proposeSlot(ProposeSlotCommand command);
+    PickupSlot getSlot(Long slotId, Long userId);
     PickupSlot counterProposeSlot(CounterProposeSlotCommand command);
     void confirmSlot(Long orderId, Long slotId, Long userId);
 }

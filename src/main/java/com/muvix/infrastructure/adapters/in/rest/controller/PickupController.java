@@ -25,6 +25,11 @@ public class PickupController {
         return ResponseEntity.ok(slot);
     }
 
+    @GetMapping("/slots/{slotId}")
+    public ResponseEntity<PickupSlot> getSlot(@AuthenticationPrincipal Jwt jwt,@PathVariable Long slotId){
+        return ResponseEntity.ok(schedulePickupSlotUseCase.getSlot(slotId,userId(jwt)));
+    }
+
     @PostMapping("/slots/counter-propose")
     public ResponseEntity<PickupSlot> counterProposeSlot(@AuthenticationPrincipal Jwt jwt,@Valid @RequestBody CounterRequest request) {
         PickupSlot slot = schedulePickupSlotUseCase.counterProposeSlot(new SchedulePickupSlotUseCase.CounterProposeSlotCommand(

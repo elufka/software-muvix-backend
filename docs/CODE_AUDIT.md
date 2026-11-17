@@ -72,10 +72,10 @@ El código sigue una intención hexagonal (`application.port.*`, servicios de ca
 
 ## Deuda y límites
 
-- `CartAndCheckoutService.findCartItemsByBuyerId` sigue lanzando `UnsupportedOperationException`: falta diseño y persistencia de carrito; el endpoint no es funcional.
+- El carrito ya se persiste por comprador y permite agregar/quitar/ver artículos; falta definir cómo actuar ante artículos de varios vendedores (rechazo actual), y cómo vencer o liberar reservas si el checkout no concluye.
 - El callback Mobbex verifica el estado consultando la operación por reference con credenciales server-to-server y evita repetir la transición vendida; el proveedor documenta webhooks inbound, consulta de operación por referencia e idempotencia necesaria ([referencia oficial Mobbex](https://www.mobbex.com/desarrolladores/postman/)). No se implementó verificación HMAC porque la colección oficial indica que se usa si está configurada; confirmar configuración real de la cuenta y reforzar idempotencia/rechazo de pagos antes de producción.
 - Operaciones externas de checkout/refund/capture y transacciones SQL no son atómicas; aplicar outbox/saga/reconciliación.
-- Faltan endpoints GET/listados para pedidos, ofertas, disputas y slots.
+- Faltan endpoints de listado general para pedidos, ofertas, disputas, slots y artículos; las consultas por ID de órdenes, ofertas, disputas, escrow y slots validan participantes.
 - No hay almacenamiento append-only para `AuditLog`; no hay migraciones versionadas para nuevas tablas/columnas.
 - El mapa interactivo y la búsqueda geoespacial no se implementaron. La cercanía actual agrupa por zonas y el adapter de zona cercana no calcula vecinos ni distancia exacta.
 - Requiere validar el esquema real de MySQL/PostgreSQL y las URLs/credenciales del entorno: el POM, nombres de paquetes y perfiles no acreditan por sí solos la base desplegada.
@@ -84,4 +84,4 @@ El código sigue una intención hexagonal (`application.port.*`, servicios de ca
 
 - `mvn -q -DskipTests compile`: completó correctamente en el árbol actualizado.
 - `mvn -q test`: completó correctamente después de añadir las implementaciones recientes y ajustar los fakes de puertos del test; el contexto Spring arrancó con perfil de test y H2.
-- El arranque del test tardó aproximadamente 103 segundos; el log mostró advertencias normales de escaneo de repositorios multi-store y `open-in-view`. No se verificó una instancia de producción, base real ni credenciales/proveedor externo.
+- El contexto Spring arrancó en unos 12 segundos en la última ejecución. El log mostró advertencias de escaneo de repositorios multi-store y `open-in-view`. No se verificó una instancia de producción, base real ni credenciales/proveedor externo.

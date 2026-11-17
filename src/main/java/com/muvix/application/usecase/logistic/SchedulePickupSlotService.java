@@ -34,6 +34,15 @@ public class SchedulePickupSlotService implements SchedulePickupSlotUseCase {
         return slots.save(PickupSlot.requestSlot(order.getId(), command.startTime(), command.endTime()));
     }
 
+    @Override @Transactional(readOnly = true)
+    public PickupSlot getSlot(Long slotId, Long userId) {
+        PickupSlot slot = slots.findById(slotId).orElseThrow(() -> new DomainException("Pickup slot not found"));
+        Order order = getOrder(slot.getOrderId());
+        if (!order.getBuyerId().equals(userId) && !sellerId(order).equals(userId))
+            throw new DomainException("Only order participants can read pickup scheduling");
+        return slot;
+    }
+
     @Override @Transactional
     public PickupSlot counterProposeSlot(CounterProposeSlotCommand command) {
         Order order = getOrder(command.orderId());
