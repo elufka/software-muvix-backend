@@ -25,6 +25,9 @@ public class PickupSlotMySQLAdapter implements PickupSlotRepositoryPort {
     @Override @Transactional(readOnly = true) public Optional<PickupSlot> findById(Long id) {
         return repository.findById(id).map(PickupSlotMySQLAdapter::toDomain);
     }
+    @Override @Transactional(readOnly = true) public Optional<PickupSlot> findLatestByOrderId(Long orderId) {
+        return repository.findFirstByOrderIdOrderByIdDesc(orderId).map(PickupSlotMySQLAdapter::toDomain);
+    }
     private static PickupSlot toDomain(PickupSlotJpaEntity e) {
         return PickupSlot.restore(e.getId(), e.getOrderId(), e.getStartTime(), e.getEndTime(), e.getStatus(),
                 e.isBuyerConfirmed(), e.isSellerConfirmed());

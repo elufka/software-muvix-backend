@@ -10,6 +10,6 @@ class BatchLifecycleTest {
         Batch batch = new Batch(10L, 3L, "set", "", BigDecimal.TEN, SellableItem.State.AVAILABLE, Set.of(1L, 2L));
         batch.removeProduct(1L);
         assertEquals(SellableItem.State.SOFT_DELETED, batch.getState());
-        assertTrue(batch.getProductIds().isEmpty());
+        assertEquals(Set.of(2L), batch.getProductIds());
     }
 }

@@ -6,6 +6,7 @@ import com.muvix.application.port.out.persistence.OrderRepositoryPort;
 import com.muvix.application.port.out.persistence.SellableItemRepositoryPort;
 import com.muvix.application.port.out.payment.MobbexGatewayPort;
 import com.muvix.domain.model.catalogue.Batch;
+import com.muvix.domain.model.catalogue.Product;
 import com.muvix.domain.model.catalogue.SellableItem;
 import com.muvix.domain.model.exception.DomainException;
 import com.muvix.domain.model.transaction.EscrowAccount;
@@ -55,12 +56,21 @@ public class ProcessMobbexWebhookService implements ProcessMobbexWebhookUseCase 
             throw new DomainException("Mobbex operation could not be verified");
 
         if ("200".equals(String.valueOf(statusCode))) {
-            // Actualizar cuenta de custodia (Escrow)
             EscrowAccount escrow = escrowRepository.findByOrderId(orderId)
-                    .orElseGet(() -> new EscrowAccount(orderId, order.getTotal()));
+                    .orElseThrow(() -> new DomainException("Escrow account not found"));
 
-            if (escrow.getStatus() != EscrowAccount.EscrowStatus.HELD) {
-                if (mobbexOperationId.equals(escrow.getExternalOperationId())) return;
+            if (escrow.getStatus() == EscrowAccount.EscrowStatus.CANCELLED) {
+                mobbex.refundPayment(mobbexOperationId);
+                escrow.refundLatePayment(mobbexOperationId);
+                escrowRepository.save(escrow);
+                return;
+            }
+            if (escrow.getStatus() == EscrowAccount.EscrowStatus.REFUNDED_TO_BUYER
+                    && mobbexOperationId.equals(escrow.getExternalOperationId())) return;
+
+            if (escrow.getStatus() == EscrowAccount.EscrowStatus.HELD
+                    && mobbexOperationId.equals(escrow.getExternalOperationId())) return;
+            if (escrow.getStatus() != EscrowAccount.EscrowStatus.PENDING_PAYMENT) {
                 throw new DomainException("Escrow has already completed a different payment operation");
             }
 
@@ -74,7 +84,14 @@ public class ProcessMobbexWebhookService implements ProcessMobbexWebhookUseCase 
                     item.markAsSold();
                     itemRepository.save(item);
                 }
-                if (item instanceof Batch batch) {
+                if (item instanceof Product) {
+                    for (SellableItem candidate : itemRepository.findBySellerId(item.getSellerId())) {
+                        if (candidate instanceof Batch batch && batch.contains(item.getId())) {
+                            batch.removeProduct(item.getId());
+                            itemRepository.save(batch);
+                        }
+                    }
+                } else if (item instanceof Batch batch) {
                     batch.getProductIds().forEach(productId -> itemRepository.findById(productId).ifPresent(product -> {
                         if (product.getState() != SellableItem.State.SOLD) {
                             product.markAsSold();

@@ -6,4 +6,5 @@ import java.util.Optional;
 public interface PickupSlotRepositoryPort {
     PickupSlot save(PickupSlot slot);
     Optional<PickupSlot> findById(Long id);
+    Optional<PickupSlot> findLatestByOrderId(Long orderId);
 }

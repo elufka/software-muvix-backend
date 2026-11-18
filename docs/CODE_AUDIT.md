@@ -28,7 +28,7 @@ El código sigue una intención hexagonal (`application.port.*`, servicios de ca
 - **Riesgos/costo:** TOTP requiere reloj sincronizado y despliegue seguro de `JWT_SECRET`; la consulta de cuenta por token agrega lectura a cada petición. Moderator se asigna directamente en base.
 
 ### 4. Checkout sin reserva/pago y liberación de escrow basada en antigüedad incorrecta
-- **Módulos / evidencia:** `PlaceOrderService`, `CartAndCheckoutService`, `EscrowAutoReleaseScheduler`, `ProcessMobbexWebhookService`.
+- **Módulos / evidencia:** `PlaceOrderService`, `CancelOrderService`, `EscrowAutoReleaseScheduler`, `ProcessMobbexWebhookService`.
 - **Problema:** checkout no devolvía URL ni vinculaba operación externa, y la liberación automática consultaba antigüedad de funding en lugar de fecha de entrega.
 - **Solución aplicada:** compra directa/Take It All/oferta crea una orden monovendedor, reserva inventario y devuelve `{order, checkoutUrl}`; Take It All usa precio configurado e ítems actualmente disponibles. Webhook aprobado marca ítems vendidos. El scheduler usa órdenes entregadas anteriores al umbral de 24h y excluye escrow `DISPUTED`.
 - **Ventajas:** transición mejor alineada con el ciclo compra→entrega→liberación.
@@ -37,7 +37,7 @@ El código sigue una intención hexagonal (`application.port.*`, servicios de ca
 ### 5. Inventario de lote incompatible con venta individual confirmada
 - **Módulos / evidencia:** `Batch`, `SellableItem`, `PlaceOrderService`, `ManageSellableItemService`.
 - **Problema:** productos integrantes y lotes no tenían ciclo de disponibilidad coordinado y el borrado separado no protegía composición mínima.
-- **Solución aplicada:** artículos y lotes reciben CRUD de vendedor; borrado lógico, separación de productos al borrar individualmente y baja lógica del lote si queda con menos de dos. Comprar lote reserva/venta también bloquea sus productos miembros.
+- **Solución aplicada:** artículos y lotes reciben CRUD de vendedor; borrado lógico, separación de productos al comprar o borrar individualmente y baja lógica del lote si queda con menos de dos. Cancelar una compra reembolsa y restaura las membresías originales, reactivando un lote que solo se había retirado por quedar bajo el mínimo. Comprar lote reserva/venta también bloquea sus productos miembros.
 - **Ventajas:** respeta independencia de productos y evita vender simultáneamente hijo y lote.
 - **Riesgos/costo:** se mantiene asociación por IDs escalares; considerar restricciones/locking y pruebas de concurrencia para reservas paralelas.
 
@@ -54,6 +54,13 @@ El código sigue una intención hexagonal (`application.port.*`, servicios de ca
 - **Solución aplicada:** el rol `MODERATOR` puede pedir evidencia adicional o resolver; el comprador tiene una ronda adicional de 2 días no extensible. Vencimiento o rechazo final libera fondos al vendedor; refund aprobado ejecuta refund Mobbex.
 - **Ventajas:** estado auditable y regla temporal definida por el usuario.
 - **Riesgos/costo:** email/teléfono a cargo del moderador queda fuera del sistema; llamadas Mobbex requieren idempotencia y reconciliación ante fallos transaccionales.
+
+### 9. Cancelación no restauraba el ciclo financiero e inventario
+- **Módulos / evidencia:** `CancelOrderService`, `Order.cancelBeforeSellerPickup`, `EscrowAccount`, `Batch`, webhook Mobbex y `OrderJpaEntity`.
+- **Problema:** no había cancelación del comprador antes de la confirmación del vendedor ni una ruta para devolver fondos y recuperar artículos/membresías al cancelar. Un pago aprobado después de cancelar un checkout podía quedar sin devolución.
+- **Solución aplicada:** `DELETE /api/v1/orders/{orderId}` valida comprador y confirmación de pickup; cancela escrows sin pago o solicita refund para fondos retenidos; restaura artículos y lotes de origen. Se guarda el snapshot de los lotes en `order_source_batches`; un pago aprobado tardío para un checkout cancelado se devuelve.
+- **Ventajas:** orden, escrow e inventario vuelven a estados coherentes según las reglas confirmadas.
+- **Riesgos/costo:** el refund del proveedor y la transacción SQL no son atómicos; mantener reconciliación/idempotencia y contemplar fallos entre ambos. El snapshot requiere migración de esquema en despliegues existentes.
 
 ### 8. Identidad del actor recibida por body/query
 - **Módulos / evidencia:** `OrderController`, `PickupController`, `DisputeController`, `BoxController`, `OfferController`, `SellableItemController`.
@@ -72,7 +79,7 @@ El código sigue una intención hexagonal (`application.port.*`, servicios de ca
 
 ## Deuda y límites
 
-- El carrito ya se persiste por comprador y permite agregar/quitar/ver artículos; falta definir cómo actuar ante artículos de varios vendedores (rechazo actual), y cómo vencer o liberar reservas si el checkout no concluye.
+- No hay carrito en el dominio ni en el API: cada checkout compra una selección directa de un vendedor. Aún falta una regla para expirar reservas de checkouts abandonados o pagos rechazados.
 - El callback Mobbex verifica el estado consultando la operación por reference con credenciales server-to-server y evita repetir la transición vendida; el proveedor documenta webhooks inbound, consulta de operación por referencia e idempotencia necesaria ([referencia oficial Mobbex](https://www.mobbex.com/desarrolladores/postman/)). No se implementó verificación HMAC porque la colección oficial indica que se usa si está configurada; confirmar configuración real de la cuenta y reforzar idempotencia/rechazo de pagos antes de producción.
 - Operaciones externas de checkout/refund/capture y transacciones SQL no son atómicas; aplicar outbox/saga/reconciliación.
 - Faltan endpoints de listado general para pedidos, ofertas, disputas, slots y artículos; las consultas por ID de órdenes, ofertas, disputas, escrow y slots validan participantes.
@@ -83,5 +90,5 @@ El código sigue una intención hexagonal (`application.port.*`, servicios de ca
 ## Verificación
 
 - `mvn -q -DskipTests compile`: completó correctamente en el árbol actualizado.
-- `mvn -q test`: completó correctamente después de añadir las implementaciones recientes y ajustar los fakes de puertos del test; el contexto Spring arrancó con perfil de test y H2.
-- El contexto Spring arrancó en unos 12 segundos en la última ejecución. El log mostró advertencias de escaneo de repositorios multi-store y `open-in-view`. No se verificó una instancia de producción, base real ni credenciales/proveedor externo.
+- `mvn -q test`: 14 tests, 0 fallos, 0 errores y 0 omitidos. Se alineó `BatchLifecycleTest` con la retención de membresías necesarias para restaurar lotes al reembolsar; el contexto Spring arrancó con perfil de test y H2.
+- El contexto Spring arrancó en unos 13 segundos en la última ejecución. El log mostró advertencias de escaneo de repositorios multi-store y `open-in-view`. No se verificó una instancia de producción, base real ni credenciales/proveedor externo.

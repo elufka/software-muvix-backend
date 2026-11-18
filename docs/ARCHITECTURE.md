@@ -52,7 +52,7 @@ flowchart LR
 
 El recorrido del feed es `BrowseCatalogUseCase` → `BrowseCatalogService` → `CatalogQueryPort` → `CatalogCassandraAdapter` → repositorio Cassandra. El alta pública es `CreateProductService` → dominio → puerto de artículos → `CatalogProjectionCassandraAdapter`. El flujo de cercanía está en `FindNearbyCatalogService`: geocodifica coordenadas, obtiene zonas, consulta artículos/cajas por zona y construye la respuesta. La ubicación concreta se llama a través de `LocationGatewayPort`.
 
-Los flujos transaccionales añaden ahora órdenes, escrows y pago Mobbex; las compras directa, Take It All y ofertas aceptadas devuelven `CheckoutResult`. La programación de retiro persiste propuestas y espera confirmación explícita de ambas partes. Disputas guardan evidencia adicional, con plazo de dos días y acción de moderador. La compra de lote reserva los productos miembros.
+Los flujos transaccionales añaden órdenes, escrows y pago Mobbex; cada checkout directo, Take It All u oferta aceptada compra una selección de un vendedor y devuelve `CheckoutResult` (no hay carrito). La programación de retiro persiste propuestas y espera confirmación explícita de ambas partes. Disputas guardan evidencia adicional, con plazo de dos días y acción de moderador. La compra de lote reserva los productos miembros. El comprador puede cancelar antes de que el vendedor confirme pickup; con fondos retenidos se solicita refund y se restaura inventario y pertenencias originales de lotes.
 
 ## Persistencia e integraciones
 

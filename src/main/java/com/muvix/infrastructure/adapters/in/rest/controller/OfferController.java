@@ -2,7 +2,6 @@ package com.muvix.infrastructure.adapters.in.rest.controller;
 
 import com.muvix.application.port.in.transaction.ManageOfferUseCase;
 import com.muvix.application.port.in.transaction.PlaceOrderUseCase;
-import com.muvix.application.port.in.transaction.CartAndCheckoutUseCase;
 import com.muvix.domain.model.negotiation.Offer;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,7 +24,7 @@ public class OfferController {
                 new ManageOfferUseCase.CreateOfferCommand(Long.valueOf(jwt.getSubject()), request.itemId(), request.amount())));
     }
     @PostMapping("/{offerId}/accept")
-    public ResponseEntity<CartAndCheckoutUseCase.CheckoutResult> accept(@AuthenticationPrincipal Jwt jwt,
+    public ResponseEntity<PlaceOrderUseCase.CheckoutResult> accept(@AuthenticationPrincipal Jwt jwt,
                                                                          @PathVariable Long offerId) {
         return ResponseEntity.status(HttpStatus.CREATED).body(placeOrder.executeOfferPurchase(
                 new PlaceOrderUseCase.AcceptOfferPurchaseCommand(Long.valueOf(jwt.getSubject()), offerId)));

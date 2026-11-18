@@ -1,6 +1,5 @@
 package com.muvix.application.usecase.transaction;
 
-import com.muvix.application.port.in.transaction.CartAndCheckoutUseCase;
 import com.muvix.application.port.in.transaction.PlaceOrderUseCase;
 import com.muvix.application.port.out.event.EventPublisherPort;
 import com.muvix.application.port.out.payment.MobbexGatewayPort;
@@ -49,7 +48,7 @@ public class PlaceOrderService implements PlaceOrderUseCase {
 
     @Override
     @Transactional
-    public CartAndCheckoutUseCase.CheckoutResult executeDirectPurchase(DirectPurchaseCommand command) {
+    public CheckoutResult executeDirectPurchase(DirectPurchaseCommand command) {
         if (command == null || command.buyerId() == null || command.itemIds() == null || command.itemIds().isEmpty())
             throw new DomainException("Buyer and at least one item are required");
         if (command.eventId() != null) {
@@ -67,7 +66,7 @@ public class PlaceOrderService implements PlaceOrderUseCase {
 
     @Override
     @Transactional
-    public CartAndCheckoutUseCase.CheckoutResult executeTakeItAllPurchase(TakeItAllPurchaseCommand command) {
+    public CheckoutResult executeTakeItAllPurchase(TakeItAllPurchaseCommand command) {
         if (command == null || command.buyerId() == null || command.eventId() == null)
             throw new DomainException("Buyer and sale event are required");
         RelocationEvent event = events.findById(command.eventId())
@@ -86,7 +85,7 @@ public class PlaceOrderService implements PlaceOrderUseCase {
 
     @Override
     @Transactional
-    public CartAndCheckoutUseCase.CheckoutResult executeOfferPurchase(AcceptOfferPurchaseCommand command) {
+    public CheckoutResult executeOfferPurchase(AcceptOfferPurchaseCommand command) {
         Offer offer = offers.findById(command.offerId()).orElseThrow(() -> new DomainException("Offer not found"));
         SellableItem item = items.findById(offer.getItemId()).orElseThrow(() -> new DomainException("Sellable item not found"));
         if (!item.getSellerId().equals(command.sellerId())) throw new DomainException("Only the seller can accept this offer");
@@ -97,7 +96,7 @@ public class PlaceOrderService implements PlaceOrderUseCase {
                 offer.getAmount(), "Muvix accepted offer " + offer.getId());
     }
 
-    private CartAndCheckoutUseCase.CheckoutResult checkout(Long buyerId, Long eventId, List<SellableItem> selected,
+    private CheckoutResult checkout(Long buyerId, Long eventId, List<SellableItem> selected,
                                                             Order.Origin origin, BigDecimal fixedPrice, String description) {
         if (selected.isEmpty()) throw new DomainException("Order must contain at least one available item");
         Long seller = selected.get(0).getSellerId();
@@ -117,9 +116,18 @@ public class PlaceOrderService implements PlaceOrderUseCase {
         }
         BigDecimal total = fixedPrice == null ? selected.stream().map(SellableItem::getPrice)
                 .reduce(BigDecimal.ZERO, BigDecimal::add) : fixedPrice;
-        Order order = orders.save(new Order(null, eventId, buyerId,
+        Set<Long> selectedProductIds = selected.stream().filter(Product.class::isInstance)
+                .map(SellableItem::getId).collect(java.util.stream.Collectors.toSet());
+        Set<Long> sourceBatchIds = selectedProductIds.isEmpty() ? Set.of() : items.findBySellerId(seller).stream()
+                .filter(Batch.class::isInstance).map(Batch.class::cast)
+                .filter(batch -> batch.getState() == SellableItem.State.AVAILABLE
+                        && selectedProductIds.stream().anyMatch(batch::contains))
+                .map(Batch::getId).collect(java.util.stream.Collectors.toSet());
+        Order pendingOrder = new Order(null, eventId, buyerId,
                 Set.copyOf(selected.stream().map(SellableItem::getId).toList()), total,
-                origin, Order.DeliveryMethod.PICKUP, null, Order.Status.PENDING_SLOT));
+                origin, Order.DeliveryMethod.PICKUP, null, Order.Status.PENDING_SLOT);
+        pendingOrder.recordSourceBatchIds(sourceBatchIds);
+        Order order = orders.save(pendingOrder);
         EscrowAccount escrow = new EscrowAccount(order.getId(), total);
         for (SellableItem item : selected) {
             item.reserve();
@@ -132,20 +140,12 @@ public class PlaceOrderService implements PlaceOrderUseCase {
                     child.reserve();
                     items.save(child);
                 }
-            } else if (item instanceof Product) {
-                for (SellableItem candidate : items.findBySellerId(seller)) {
-                    if (candidate instanceof Batch batch && batch.getState() == SellableItem.State.AVAILABLE
-                            && batch.contains(item.getId())) {
-                        batch.removeProduct(item.getId());
-                        items.save(batch);
-                    }
-                }
             }
         }
         MobbexGatewayPort.CheckoutResponse payment = mobbex.createCheckout(new MobbexGatewayPort.CheckoutRequest(
                 order.getId().toString(), total, description, ""));
         escrow.attachExternalOperationId(payment.mobbexPaymentId());
         escrows.save(escrow);
-        return new CartAndCheckoutUseCase.CheckoutResult(order, payment.checkoutUrl());
+        return new CheckoutResult(order, payment.checkoutUrl());
     }
 }

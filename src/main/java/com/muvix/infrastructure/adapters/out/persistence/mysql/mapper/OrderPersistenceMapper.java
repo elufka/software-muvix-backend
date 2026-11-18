@@ -20,6 +20,7 @@ public final class OrderPersistenceMapper {
                 entity.getEventId(),
                 entity.getBuyerId(),
                 entity.getItemIds(),
+                entity.getSourceBatchIds(),
                 entity.getTotal(),
                 Order.Origin.valueOf(entity.getOrigin().name()),
                 Order.DeliveryMethod.valueOf(entity.getDeliveryMethod().name()),
@@ -38,6 +39,7 @@ public final class OrderPersistenceMapper {
         entity.setEventId(order.getEventId());
         entity.setBuyerId(order.getBuyerId());
         entity.setItemIds(new java.util.HashSet<>(order.getItemIds()));
+        entity.setSourceBatchIds(new java.util.HashSet<>(order.getSourceBatchIds()));
         entity.setTotal(order.getTotal());
         entity.setOrigin(OrderJpaEntity.OriginJpa.valueOf(order.getOrigin().name()));
         entity.setDeliveryMethod(OrderJpaEntity.DeliveryMethodJpa.valueOf(order.getDeliveryMethod().name()));

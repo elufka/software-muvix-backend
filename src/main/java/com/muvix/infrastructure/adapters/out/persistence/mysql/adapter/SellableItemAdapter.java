@@ -13,7 +13,6 @@ import com.muvix.infrastructure.adapters.out.persistence.mysql.mapper.SellableIt
 import com.muvix.infrastructure.adapters.out.persistence.mysql.repository.BatchJpaRepository;
 import com.muvix.infrastructure.adapters.out.persistence.mysql.repository.ProductJpaRepository;
 import com.muvix.infrastructure.adapters.out.persistence.mysql.repository.SellableItemJpaRepository;
-import com.muvix.infrastructure.adapters.out.persistence.mysql.repository.ShoppingCartJpaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,7 +29,6 @@ public class SellableItemAdapter implements SellableItemRepositoryPort {
     private final SellableItemJpaRepository itemRepo;
     private final ProductJpaRepository productRepo;
     private final BatchJpaRepository batchRepo;
-    private final ShoppingCartJpaRepository cartRepo;
 
 
     @Override
@@ -81,14 +79,6 @@ public class SellableItemAdapter implements SellableItemRepositoryPort {
         return itemRepo.findBySellerId(sellerId).stream()
                 .map(SellableItemPersistenceMapper::toDomain)
                 .toList();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<SellableItem> findCartItemsByBuyerId(Long buyerId) {
-        return cartRepo.findById(buyerId).stream().flatMap(cart -> cart.getItemIds().stream())
-                .map(itemRepo::findById).flatMap(Optional::stream)
-                .map(SellableItemPersistenceMapper::toDomain).toList();
     }
 
     @Override

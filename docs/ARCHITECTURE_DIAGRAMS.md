@@ -37,21 +37,47 @@ Nota: el acceso directo de `SearchCatalogService` a repositorios Cassandra y las
 
 ```mermaid
 sequenceDiagram
-  actor Cliente
-  participant API as REST Controller
-  participant Caso as Servicio de aplicación
-  participant Dominio
-  participant Puerto as Puerto de salida
-  participant DB as Adaptador/persistencia
-  Cliente->>API: alta/búsqueda/operación
-  API->>Caso: comando o consulta
-  Caso->>Dominio: crear/aplicar regla (cuando corresponde)
-  Caso->>Puerto: persistir, consultar o integrar
-  Puerto->>DB: llamada Spring Data / HTTP
-  DB-->>Puerto: entidad/respuesta
-  Puerto-->>Caso: resultado
-  Caso-->>API: resultado del caso de uso
-  API-->>Cliente: respuesta HTTP
+  actor Buyer
+  participant API as OrderController
+  participant Service as PlaceOrderService
+  participant Items as SellableItemRepositoryPort
+  participant Orders as OrderRepositoryPort
+  participant Mobbex as MobbexGatewayPort
+  Buyer->>API: POST direct purchase (selected item IDs, optional purchase event)
+  API->>Service: executeDirectPurchase (buyer from JWT)
+  Service->>Items: load items and source batches
+  Service->>Orders: save pending order
+  Service->>Items: reserve selected items and batch children
+  Service->>Mobbex: create checkout
+  Mobbex-->>Service: checkout URL and operation ID
+  Service->>Service: attach operation ID to pending escrow
+  Service-->>API: CheckoutResult(order, checkoutUrl)
+  API-->>Buyer: order and payment URL
+```
+
+La cancelación de una orden sigue otra secuencia: `DELETE /api/v1/orders/{id}` valida al comprador del JWT y que el vendedor no haya confirmado pickup; cancela el escrow pendiente o solicita refund si está retenido, restaura ítems y membresías de lote, y persiste la orden como `CANCELLED`.
+
+```mermaid
+sequenceDiagram
+  actor Buyer
+  participant API as OrderController
+  participant Cancel as CancelOrderService
+  participant Slot as PickupSlotRepositoryPort
+  participant Escrow as EscrowAccountRepositoryPort
+  participant Mobbex as MobbexGatewayPort
+  participant Inventory as SellableItemRepositoryPort
+  Buyer->>API: DELETE order (JWT)
+  API->>Cancel: cancelByBuyer(orderId, buyerId)
+  Cancel->>Slot: latest slot
+  Cancel->>Escrow: load escrow
+  alt payment held
+    Cancel->>Mobbex: refundPayment(operationId)
+  else checkout unpaid
+    Cancel->>Escrow: cancelUnpaid()
+  end
+  Cancel->>Inventory: restore item and source batch memberships
+  Cancel-->>API: persist cancelled order and escrow
+  API-->>Buyer: success
 ```
 
 Para cercanía en particular, el caso `FindNearbyCatalogService` resuelve zona mediante `LocationGatewayPort`, obtiene una lista de zonas y solicita artículos/cajas por zona a `CatalogQueryPort`. El adaptador incluido de OpenStreetMap responde hoy solo con la zona central ante consulta de zonas cercanas.
@@ -85,6 +111,7 @@ classDiagram
   class Order {
     Long buyerId
     Set~Long~ itemIds
+    Set~Long~ sourceBatchIds
     BigDecimal total
     Status status
   }
@@ -161,12 +188,9 @@ erDiagram
     string origin
     string status
   }
-  SHOPPING_CARTS {
-    bigint buyer_id PK
-  }
-  SHOPPING_CART_ITEMS {
-    bigint buyer_id FK
-    bigint item_id
+  ORDER_SOURCE_BATCHES {
+    bigint order_id FK
+    bigint batch_id
   }
   ORDER_ITEMS {
     bigint order_id FK
@@ -212,7 +236,7 @@ erDiagram
   SELLABLE_ITEMS ||--o{ PRODUCT_IMAGES : element_collection
   SELLABLE_ITEMS ||--o{ BATCH_PRODUCTS : element_collection
   ORDERS ||--o{ ORDER_ITEMS : element_collection
-  SHOPPING_CARTS ||--o{ SHOPPING_CART_ITEMS : element_collection
+  ORDERS ||--o{ ORDER_SOURCE_BATCHES : element_collection
   DISPUTES ||--o{ DISPUTE_EVIDENCE : element_collection
 ```
 

@@ -1,8 +1,8 @@
 package com.muvix.infrastructure.adapters.in.rest.controller;
 
-import com.muvix.application.port.in.transaction.CartAndCheckoutUseCase;
 import com.muvix.application.port.in.transaction.PlaceOrderUseCase;
 import com.muvix.application.port.in.transaction.GetOrderUseCase;
+import com.muvix.application.port.in.transaction.CancelOrderUseCase;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,46 +19,24 @@ import com.muvix.domain.model.transaction.Order;
 public class OrderController {
 
     private final PlaceOrderUseCase placeOrderUseCase;
-    private final CartAndCheckoutUseCase cartAndCheckoutUseCase;
     private final GetOrderUseCase getOrderUseCase;
+    private final CancelOrderUseCase cancelOrderUseCase;
 
-    public OrderController(PlaceOrderUseCase placeOrderUseCase,
-                           CartAndCheckoutUseCase cartAndCheckoutUseCase, GetOrderUseCase getOrderUseCase) {
+    public OrderController(PlaceOrderUseCase placeOrderUseCase, GetOrderUseCase getOrderUseCase,
+                           CancelOrderUseCase cancelOrderUseCase) {
         this.placeOrderUseCase = placeOrderUseCase;
-        this.cartAndCheckoutUseCase = cartAndCheckoutUseCase;
         this.getOrderUseCase = getOrderUseCase;
+        this.cancelOrderUseCase = cancelOrderUseCase;
     }
 
     @PostMapping("/direct")
-    public ResponseEntity<CartAndCheckoutUseCase.CheckoutResult> placeDirectOrder(@AuthenticationPrincipal Jwt jwt,@Valid @RequestBody DirectOrderRequest request) {
+    public ResponseEntity<PlaceOrderUseCase.CheckoutResult> placeDirectOrder(@AuthenticationPrincipal Jwt jwt,@Valid @RequestBody DirectOrderRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(placeOrderUseCase.executeDirectPurchase(new PlaceOrderUseCase.DirectPurchaseCommand(userId(jwt),request.eventId(),request.itemIds())));
     }
 
     @PostMapping("/take-it-all")
-    public ResponseEntity<CartAndCheckoutUseCase.CheckoutResult> placeTakeItAllOrder(@AuthenticationPrincipal Jwt jwt,@Valid @RequestBody TakeItAllRequest request) {
+    public ResponseEntity<PlaceOrderUseCase.CheckoutResult> placeTakeItAllOrder(@AuthenticationPrincipal Jwt jwt,@Valid @RequestBody TakeItAllRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(placeOrderUseCase.executeTakeItAllPurchase(new PlaceOrderUseCase.TakeItAllPurchaseCommand(userId(jwt),request.eventId())));
-    }
-
-    @PostMapping("/cart/checkout")
-    public ResponseEntity<CartAndCheckoutUseCase.CheckoutResult> checkoutCart(@AuthenticationPrincipal Jwt jwt,@Valid @RequestBody CartCheckoutRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(cartAndCheckoutUseCase.checkoutWithPayment(new CartAndCheckoutUseCase.CheckoutCartCommand(userId(jwt),request.targetEventId(),request.deliveryMethod())));
-    }
-
-    @PostMapping("/cart/items")
-    public ResponseEntity<Void> addItemToCart(@AuthenticationPrincipal Jwt jwt,@RequestParam Long itemId) {
-        cartAndCheckoutUseCase.addItemToCart(new CartAndCheckoutUseCase.AddToCartCommand(userId(jwt), itemId));
-        return ResponseEntity.ok().build();
-    }
-
-    @GetMapping("/cart/items")
-    public ResponseEntity<java.util.List<com.muvix.domain.model.catalogue.SellableItem>> getCart(@AuthenticationPrincipal Jwt jwt){
-        return ResponseEntity.ok(cartAndCheckoutUseCase.getCartItems(userId(jwt)));
-    }
-
-    @DeleteMapping("/cart/items/{itemId}")
-    public ResponseEntity<Void> removeCartItem(@AuthenticationPrincipal Jwt jwt,@PathVariable Long itemId){
-        cartAndCheckoutUseCase.removeItemFromCart(userId(jwt),itemId);
-        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{orderId}")
@@ -66,8 +44,13 @@ public class OrderController {
         return ResponseEntity.ok(getOrderUseCase.get(orderId,userId(jwt)));
     }
 
+    @DeleteMapping("/{orderId}")
+    public ResponseEntity<Void> cancelOrder(@AuthenticationPrincipal Jwt jwt,@PathVariable Long orderId){
+        cancelOrderUseCase.cancelByBuyer(orderId,userId(jwt));
+        return ResponseEntity.noContent().build();
+    }
+
     private static Long userId(Jwt jwt){return Long.valueOf(jwt.getSubject());}
     public record DirectOrderRequest(Long eventId,Set<Long> itemIds){}
     public record TakeItAllRequest(Long eventId){}
-    public record CartCheckoutRequest(Long targetEventId,Order.DeliveryMethod deliveryMethod){}
 }

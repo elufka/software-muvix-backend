@@ -29,10 +29,12 @@ public class EscrowAccountJpaEntity {
     private Instant accreditedAt;
 
     public enum EscrowStatusJpa {
+        PENDING_PAYMENT,
         HELD,
         ACCREDITED_TO_SELLER,
         REFUNDED_TO_BUYER,
-        DISPUTED
+        DISPUTED,
+        CANCELLED
     }
 
     public EscrowAccountJpaEntity() {

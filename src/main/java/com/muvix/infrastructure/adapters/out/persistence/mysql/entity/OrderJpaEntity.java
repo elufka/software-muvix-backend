@@ -25,6 +25,11 @@ public class OrderJpaEntity {
     @Column(name = "item_id")
     private Set<Long> itemIds = new HashSet<>();
 
+    @ElementCollection
+    @CollectionTable(name = "order_source_batches", joinColumns = @JoinColumn(name = "order_id"))
+    @Column(name = "batch_id", nullable = false)
+    private Set<Long> sourceBatchIds = new HashSet<>();
+
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal total;
 
@@ -66,6 +71,8 @@ public class OrderJpaEntity {
     public void setBuyerId(Long buyerId) { this.buyerId = buyerId; }
     public Set<Long> getItemIds() { return itemIds; }
     public void setItemIds(Set<Long> itemIds) { this.itemIds = itemIds; }
+    public Set<Long> getSourceBatchIds() { return sourceBatchIds; }
+    public void setSourceBatchIds(Set<Long> sourceBatchIds) { this.sourceBatchIds = sourceBatchIds; }
     public BigDecimal getTotal() { return total; }
     public void setTotal(BigDecimal total) { this.total = total; }
     public OriginJpa getOrigin() { return origin; }

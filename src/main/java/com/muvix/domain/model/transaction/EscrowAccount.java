@@ -5,7 +5,7 @@ import java.time.Instant;
 
 public class EscrowAccount {
 
-    public enum EscrowStatus { HELD, ACCREDITED_TO_SELLER, REFUNDED_TO_BUYER, DISPUTED }
+    public enum EscrowStatus { PENDING_PAYMENT, HELD, ACCREDITED_TO_SELLER, REFUNDED_TO_BUYER, DISPUTED, CANCELLED }
 
     private final Long orderId;
     private final BigDecimal amount;
@@ -17,7 +17,7 @@ public class EscrowAccount {
     public EscrowAccount(Long orderId, BigDecimal amount) {
         this.orderId = orderId;
         this.amount = amount;
-        this.status = EscrowStatus.HELD;
+        this.status = EscrowStatus.PENDING_PAYMENT;
         this.fundedAt = Instant.now();
     }
 
@@ -49,13 +49,14 @@ public class EscrowAccount {
             );
         }
 
-        if (status != EscrowStatus.HELD) {
+        if (status != EscrowStatus.PENDING_PAYMENT) {
             throw new IllegalStateException(
-                    "Cannot register operation for a non-held escrow"
+                    "Payment can only be registered for a pending escrow"
             );
         }
-
         this.externalOperationId = operationId;
+        this.status = EscrowStatus.HELD;
+        this.fundedAt = Instant.now();
     }
 
     public void releaseToSeller(Instant deliveredAt, Instant now) {
@@ -97,8 +98,21 @@ public class EscrowAccount {
 
     public void attachExternalOperationId(String operationId) {
         if (operationId == null || operationId.isBlank()) throw new IllegalArgumentException("External operation ID is required");
-        if (status != EscrowStatus.HELD) throw new IllegalStateException("Only held escrow can be linked to a payment");
+        if (status != EscrowStatus.PENDING_PAYMENT) throw new IllegalStateException("Only pending escrow can be linked to a checkout");
         this.externalOperationId = operationId;
+    }
+
+    public void cancelUnpaid() {
+        if (status != EscrowStatus.PENDING_PAYMENT) throw new IllegalStateException("Only unpaid escrow can be cancelled without refund");
+        status = EscrowStatus.CANCELLED;
+    }
+
+    public void refundLatePayment(String operationId) {
+        if (status != EscrowStatus.CANCELLED) throw new IllegalStateException("Only a cancelled unpaid escrow can receive a late payment");
+        if (operationId == null || operationId.isBlank()) throw new IllegalArgumentException("External operation ID is required");
+        externalOperationId = operationId;
+        status = EscrowStatus.REFUNDED_TO_BUYER;
+        fundedAt = Instant.now();
     }
 
 

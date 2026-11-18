@@ -53,7 +53,6 @@ public final class Batch extends SellableItem {
         if (!productIds.contains(productId)) return;
         productIds.remove(productId);
         if (productIds.size() < 2) {
-            productIds.clear();
             softDelete();
         }
     }
@@ -70,6 +69,18 @@ public final class Batch extends SellableItem {
     public void deleteBatch() {
         productIds.clear();
         softDelete();
+    }
+
+    public void restoreProductAfterRefund(Product product) {
+        if (!product.getSellerId().equals(getSellerId())) throw new DomainException("Product belongs to a different seller");
+        if (productIds.contains(product.getId())) return;
+        if (getState() == State.SOFT_DELETED && productIds.isEmpty()) return;
+        if (getState() == State.SOFT_DELETED && productIds.size() >= 1) {
+            addProduct(product);
+            state = State.AVAILABLE;
+        } else if (getState() == State.AVAILABLE) {
+            addProduct(product);
+        }
     }
 
     public boolean contains(Long productId) { return productIds.contains(productId); }

@@ -75,6 +75,12 @@ public abstract sealed class SellableItem permits Product, Batch {
         this.state = State.SOFT_DELETED;
     }
 
+    public void restoreAfterRefund() {
+        if (state != State.RESERVED && state != State.SOLD)
+            throw new DomainException("Only reserved or sold items can be restored after a refund");
+        this.state = State.AVAILABLE;
+    }
+
     public void replaceDetails(String title, String description, BigDecimal price) {
         if (title == null || title.isBlank()) throw new DomainException("Title is required");
         if (state == State.SOLD || state == State.RESERVED || state == State.SOFT_DELETED)

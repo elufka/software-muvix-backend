@@ -18,6 +18,7 @@ public class Order {
     private final Long eventId;
     private final Long buyerId;
     private final Set<Long> itemIds = new HashSet<>();
+    private final Set<Long> sourceBatchIds = new HashSet<>();
     private final BigDecimal total;
     private final Origin origin;
     private final DeliveryMethod deliveryMethod;
@@ -55,6 +56,16 @@ public class Order {
         return order;
     }
 
+    public static Order restore(Long id, Long eventId, Long buyerId, Set<Long> itemIds, Set<Long> sourceBatchIds,
+                                BigDecimal total, Origin origin, DeliveryMethod deliveryMethod, Long slotId,
+                                Status status, AuthorizedPickupPerson authorizedPickupPerson, String pickupPin,
+                                Instant deliveredAt) {
+        Order order = restore(id,eventId,buyerId,itemIds,total,origin,deliveryMethod,slotId,status,
+                authorizedPickupPerson,pickupPin,deliveredAt);
+        if (sourceBatchIds != null) order.sourceBatchIds.addAll(sourceBatchIds);
+        return order;
+    }
+
     public void setAuthorizedPickupPerson(AuthorizedPickupPerson person) {
         if (deliveryMethod != DeliveryMethod.PICKUP) {
             throw new DomainException("Authorized person is only applicable for pickup orders");
@@ -74,6 +85,16 @@ public class Order {
         this.status = Status.SLOT_CONFIRMED;
     }
 
+    public void cancelBeforeSellerPickup() {
+        if (status != Status.PENDING_SLOT) throw new DomainException("Order can no longer be cancelled by the buyer");
+        status = Status.CANCELLED;
+    }
+
+    public void recordSourceBatchIds(Set<Long> batchIds) {
+        if (status != Status.PENDING_SLOT) throw new DomainException("Source batches can only be recorded before pickup confirmation");
+        if (batchIds != null) sourceBatchIds.addAll(batchIds);
+    }
+
     public void completePickup(String providedPin) {
         if (status != Status.SLOT_CONFIRMED) throw new DomainException("Order is not in slot confirmed status");
         if (pickupPin == null || !pickupPin.validate(providedPin)) {
@@ -91,6 +112,7 @@ public class Order {
     public Long getEventId() { return eventId; }
     public Long getBuyerId() { return buyerId; }
     public Set<Long> getItemIds() { return Set.copyOf(itemIds); }
+    public Set<Long> getSourceBatchIds() { return Set.copyOf(sourceBatchIds); }
     public BigDecimal getTotal() { return total; }
     public Origin getOrigin() { return origin; }
     public DeliveryMethod getDeliveryMethod() { return deliveryMethod; }

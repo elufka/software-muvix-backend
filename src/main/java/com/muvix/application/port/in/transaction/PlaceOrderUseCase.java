@@ -6,13 +6,15 @@ import java.util.Set;
 
 public interface PlaceOrderUseCase {
 
+    record CheckoutResult(Order order, String checkoutUrl) {}
+
     record DirectPurchaseCommand(Long buyerId, Long eventId, Set<Long> itemIds) {}
 
     record TakeItAllPurchaseCommand(Long buyerId, Long eventId) {}
 
     record AcceptOfferPurchaseCommand(Long sellerId, Long offerId) {}
 
-    CartAndCheckoutUseCase.CheckoutResult executeDirectPurchase(DirectPurchaseCommand command);
-    CartAndCheckoutUseCase.CheckoutResult executeTakeItAllPurchase(TakeItAllPurchaseCommand command);
-    CartAndCheckoutUseCase.CheckoutResult executeOfferPurchase(AcceptOfferPurchaseCommand command);
+    CheckoutResult executeDirectPurchase(DirectPurchaseCommand command);
+    CheckoutResult executeTakeItAllPurchase(TakeItAllPurchaseCommand command);
+    CheckoutResult executeOfferPurchase(AcceptOfferPurchaseCommand command);
 }

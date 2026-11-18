@@ -18,8 +18,6 @@ public interface SellableItemRepositoryPort {
 
     List<Product> findProductsByIds(Set<Long> productIds);
 
-    List<SellableItem> findCartItemsByBuyerId(Long buyerId);
-
     List<SellableItem> findBySellerId(Long sellerId);
 
     void deleteById(Long id);

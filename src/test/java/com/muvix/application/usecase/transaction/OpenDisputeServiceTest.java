@@ -33,7 +33,7 @@ class OpenDisputeServiceTest {
                 null, null, now.minusSeconds(600));
         FakeOrders orders = new FakeOrders(deliveredOrder);
         FakeDisputes disputes = new FakeDisputes();
-        FakeEscrows escrows = new FakeEscrows(new EscrowAccount(11L, new BigDecimal("10.00")));
+        FakeEscrows escrows = new FakeEscrows(paidEscrow(11L, new BigDecimal("10.00")));
         FakeEvents events = new FakeEvents();
         OpenDisputeService service = new OpenDisputeService(orders, disputes, escrows, events,
                 Clock.fixed(now, ZoneOffset.UTC));
@@ -53,13 +53,19 @@ class OpenDisputeServiceTest {
         Order order = Order.restore(11L, 22L, 33L, Set.of(44L), BigDecimal.TEN,
                 Order.Origin.DIRECT_PURCHASE, Order.DeliveryMethod.PICKUP, 55L, Order.Status.DELIVERED,
                 null, null, now.minusSeconds(60));
-        FakeEscrows escrows = new FakeEscrows(new EscrowAccount(11L, BigDecimal.TEN));
+        FakeEscrows escrows = new FakeEscrows(paidEscrow(11L, BigDecimal.TEN));
         OpenDisputeService service = new OpenDisputeService(new FakeOrders(order), new FakeDisputes(),
                 escrows, new FakeEvents(), Clock.systemUTC());
 
         assertThrows(DomainException.class, () -> service.openDispute(
                 new OpenDisputeUseCase.OpenDisputeCommand(11L, 7L, "reason", List.of())));
         assertEquals(EscrowAccount.EscrowStatus.HELD, escrows.account.getStatus());
+    }
+
+    private static EscrowAccount paidEscrow(Long orderId, BigDecimal amount) {
+        EscrowAccount account = new EscrowAccount(orderId, amount);
+        account.registerExternalOperationId("mobbex-" + orderId);
+        return account;
     }
 
     private static final class FakeOrders implements OrderRepositoryPort {
