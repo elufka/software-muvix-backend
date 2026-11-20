@@ -2,10 +2,10 @@ package com.muvix.application.usecase.event;
 
 import com.muvix.application.port.in.event.CreateRelocationEventUseCase;
 import com.muvix.application.port.out.persistence.RelocationEventRepositoryPort;
-import com.muvix.domain.model.management.FullRelocationEvent;
-import com.muvix.domain.model.management.PurchaseEvent;
-import com.muvix.domain.model.management.RelocationEvent;
-import com.muvix.domain.model.management.SaleEvent;
+import com.muvix.domain.model.management.FullRelocationBox;
+import com.muvix.domain.model.management.PurchaseBox;
+import com.muvix.domain.model.management.Box;
+import com.muvix.domain.model.management.SaleBox;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,8 +20,8 @@ public class CreateRelocationEventService implements CreateRelocationEventUseCas
 
     @Override
     @Transactional
-    public RelocationEvent createSaleBox(CreateSaleBoxCommand command) {
-        SaleEvent event = new SaleEvent(
+    public Box createSaleBox(CreateSaleBoxCommand command) {
+        SaleBox event = new SaleBox(
                 null,
                 command.userId(),
                 command.title(),
@@ -30,7 +30,7 @@ public class CreateRelocationEventService implements CreateRelocationEventUseCas
                 command.takeItAllPrice(),
                 command.discountRules(),
                 null,
-                RelocationEvent.Status.DRAFT,
+                Box.Status.DRAFT,
                 null
         );
         return eventRepository.save(event);
@@ -38,15 +38,15 @@ public class CreateRelocationEventService implements CreateRelocationEventUseCas
 
     @Override
     @Transactional
-    public RelocationEvent createPurchaseBox(CreatePurchaseBoxCommand command) {
-        PurchaseEvent event = new PurchaseEvent(
+    public Box createPurchaseBox(CreatePurchaseBoxCommand command) {
+        PurchaseBox event = new PurchaseBox(
                 null,
                 command.userId(),
                 command.title(),
                 command.destinationLocation(),
                 command.arrivalDeliveryDate(),
                 null,
-                RelocationEvent.Status.DRAFT,
+                Box.Status.DRAFT,
                 null
         );
         return eventRepository.save(event);
@@ -54,8 +54,8 @@ public class CreateRelocationEventService implements CreateRelocationEventUseCas
 
     @Override
     @Transactional
-    public RelocationEvent createFullRelocationBox(CreateFullRelocationBoxCommand command) {
-        FullRelocationEvent event = new FullRelocationEvent(
+    public Box createFullRelocationBox(CreateFullRelocationBoxCommand command) {
+        FullRelocationBox event = new FullRelocationBox(
                 null,
                 command.userId(),
                 command.title(),
@@ -66,7 +66,7 @@ public class CreateRelocationEventService implements CreateRelocationEventUseCas
                 command.takeItAllPrice(),
                 command.discountRules(),
                 null,
-                RelocationEvent.Status.DRAFT,
+                Box.Status.DRAFT,
                 null
         );
         return eventRepository.save(event);

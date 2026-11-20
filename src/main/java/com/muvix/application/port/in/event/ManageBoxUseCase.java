@@ -1,6 +1,6 @@
 package com.muvix.application.port.in.event;
 
-import com.muvix.domain.model.management.RelocationEvent;
+import com.muvix.domain.model.management.Box;
 
 public interface ManageBoxUseCase {
 

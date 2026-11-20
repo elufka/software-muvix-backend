@@ -12,8 +12,8 @@ import com.muvix.domain.model.catalogue.SellableItem;
 import com.muvix.domain.model.catalogue.Batch;
 import com.muvix.domain.model.catalogue.Product;
 import com.muvix.domain.model.exception.DomainException;
-import com.muvix.domain.model.management.RelocationEvent;
-import com.muvix.domain.model.management.SaleEvent;
+import com.muvix.domain.model.management.Box;
+import com.muvix.domain.model.management.SaleBox;
 import com.muvix.domain.model.negotiation.Offer;
 import com.muvix.domain.model.transaction.EscrowAccount;
 import com.muvix.domain.model.transaction.Order;
@@ -52,9 +52,9 @@ public class PlaceOrderService implements PlaceOrderUseCase {
         if (command == null || command.buyerId() == null || command.itemIds() == null || command.itemIds().isEmpty())
             throw new DomainException("Buyer and at least one item are required");
         if (command.eventId() != null) {
-            RelocationEvent event = events.findById(command.eventId())
+            Box event = events.findById(command.eventId())
                     .orElseThrow(() -> new DomainException("Purchase event not found"));
-            if (!(event instanceof com.muvix.domain.model.management.PurchaseEvent)
+            if (!(event instanceof com.muvix.domain.model.management.PurchaseBox)
                     || !event.getUserId().equals(command.buyerId()))
                 throw new DomainException("The optional event must be the buyer's purchase event");
         }
@@ -69,9 +69,9 @@ public class PlaceOrderService implements PlaceOrderUseCase {
     public CheckoutResult executeTakeItAllPurchase(TakeItAllPurchaseCommand command) {
         if (command == null || command.buyerId() == null || command.eventId() == null)
             throw new DomainException("Buyer and sale event are required");
-        RelocationEvent event = events.findById(command.eventId())
+        Box event = events.findById(command.eventId())
                 .orElseThrow(() -> new DomainException("Sale event not found"));
-        if (!(event instanceof SaleEvent sale) || !sale.isActive())
+        if (!(event instanceof SaleBox sale) || !sale.isActive())
             throw new DomainException("Take It All requires an active sale event");
         if (sale.getUserId().equals(command.buyerId())) throw new DomainException("You cannot buy your own sale event");
         List<Long> ids = events.findItemIdsByEventId(sale.getId());

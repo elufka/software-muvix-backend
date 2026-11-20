@@ -3,7 +3,7 @@ package com.muvix.infrastructure.adapters.in.rest.controller;
 import com.muvix.application.port.in.event.CreateRelocationEventUseCase;
 import com.muvix.application.port.in.event.ManageBoxUseCase;
 import com.muvix.application.port.in.event.ManageRelocationEventUseCase;
-import com.muvix.domain.model.management.RelocationEvent;
+import com.muvix.domain.model.management.Box;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,20 +30,20 @@ BoxController {
     }
 
     @PostMapping("/sale")
-    public ResponseEntity<RelocationEvent> createSaleBox(@AuthenticationPrincipal Jwt jwt,@Valid @RequestBody CreateRelocationEventUseCase.CreateSaleBoxCommand command) {
-        RelocationEvent box = createBoxUseCase.createSaleBox(new CreateRelocationEventUseCase.CreateSaleBoxCommand(userId(jwt),command.title(),command.originLocation(),command.saleDeadline(),command.takeItAllPrice(),command.discountRules()));
+    public ResponseEntity<Box> createSaleBox(@AuthenticationPrincipal Jwt jwt,@Valid @RequestBody CreateRelocationEventUseCase.CreateSaleBoxCommand command) {
+        Box box = createBoxUseCase.createSaleBox(new CreateRelocationEventUseCase.CreateSaleBoxCommand(userId(jwt),command.title(),command.originLocation(),command.saleDeadline(),command.takeItAllPrice(),command.discountRules()));
         return ResponseEntity.status(HttpStatus.CREATED).body(box);
     }
 
     @PostMapping("/purchase")
-    public ResponseEntity<RelocationEvent> createPurchaseBox(@AuthenticationPrincipal Jwt jwt,@Valid @RequestBody CreateRelocationEventUseCase.CreatePurchaseBoxCommand command) {
-        RelocationEvent box = createBoxUseCase.createPurchaseBox(new CreateRelocationEventUseCase.CreatePurchaseBoxCommand(userId(jwt),command.title(),command.destinationLocation(),command.arrivalDeliveryDate()));
+    public ResponseEntity<Box> createPurchaseBox(@AuthenticationPrincipal Jwt jwt,@Valid @RequestBody CreateRelocationEventUseCase.CreatePurchaseBoxCommand command) {
+        Box box = createBoxUseCase.createPurchaseBox(new CreateRelocationEventUseCase.CreatePurchaseBoxCommand(userId(jwt),command.title(),command.destinationLocation(),command.arrivalDeliveryDate()));
         return ResponseEntity.status(HttpStatus.CREATED).body(box);
     }
 
     @PostMapping("/full-relocation")
-    public ResponseEntity<RelocationEvent> createFullRelocationBox(@AuthenticationPrincipal Jwt jwt,@Valid @RequestBody CreateRelocationEventUseCase.CreateFullRelocationBoxCommand command) {
-        RelocationEvent box = createBoxUseCase.createFullRelocationBox(new CreateRelocationEventUseCase.CreateFullRelocationBoxCommand(userId(jwt),command.title(),command.originLocation(),command.destinationLocation(),command.saleDeadline(),command.arrivalDeliveryDate(),command.takeItAllPrice(),command.discountRules()));
+    public ResponseEntity<Box> createFullRelocationBox(@AuthenticationPrincipal Jwt jwt,@Valid @RequestBody CreateRelocationEventUseCase.CreateFullRelocationBoxCommand command) {
+        Box box = createBoxUseCase.createFullRelocationBox(new CreateRelocationEventUseCase.CreateFullRelocationBoxCommand(userId(jwt),command.title(),command.originLocation(),command.destinationLocation(),command.saleDeadline(),command.arrivalDeliveryDate(),command.takeItAllPrice(),command.discountRules()));
         return ResponseEntity.status(HttpStatus.CREATED).body(box);
     }
 
@@ -56,10 +56,10 @@ BoxController {
     }
 
     @GetMapping("/{boxId}")
-    public ResponseEntity<RelocationEvent> get(@AuthenticationPrincipal Jwt jwt,@PathVariable Long boxId){return ResponseEntity.ok(manageEvents.get(boxId,userId(jwt)));}
+    public ResponseEntity<Box> get(@AuthenticationPrincipal Jwt jwt,@PathVariable Long boxId){return ResponseEntity.ok(manageEvents.get(boxId,userId(jwt)));}
 
     @PutMapping("/{boxId}")
-    public ResponseEntity<RelocationEvent> replace(@AuthenticationPrincipal Jwt jwt,@PathVariable Long boxId,@RequestBody ReplaceBoxRequest r){
+    public ResponseEntity<Box> replace(@AuthenticationPrincipal Jwt jwt,@PathVariable Long boxId,@RequestBody ReplaceBoxRequest r){
         return ResponseEntity.ok(manageEvents.replace(new ManageRelocationEventUseCase.ReplaceCommand(boxId,userId(jwt),r.title(),r.originLocation(),r.destinationLocation(),r.saleDeadline(),r.arrivalDeliveryDate(),r.takeItAllPrice(),r.discountRules())));
     }
 

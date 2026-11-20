@@ -5,10 +5,10 @@ import com.muvix.application.port.out.persistence.RelocationEventRepositoryPort;
 import com.muvix.application.port.out.persistence.SellableItemRepositoryPort;
 import com.muvix.domain.model.catalogue.SellableItem;
 import com.muvix.domain.model.exception.DomainException;
-import com.muvix.domain.model.management.FullRelocationEvent;
-import com.muvix.domain.model.management.PurchaseEvent;
-import com.muvix.domain.model.management.RelocationEvent;
-import com.muvix.domain.model.management.SaleEvent;
+import com.muvix.domain.model.management.FullRelocationBox;
+import com.muvix.domain.model.management.PurchaseBox;
+import com.muvix.domain.model.management.Box;
+import com.muvix.domain.model.management.SaleBox;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,7 +27,7 @@ public class ManageBoxService implements ManageBoxUseCase {
     @Override
     @Transactional
     public void addItemToBox(AddItemToBoxCommand command) {
-        RelocationEvent box = boxRepositoryPort.findById(command.boxId())
+        Box box = boxRepositoryPort.findById(command.boxId())
                 .orElseThrow(() -> new DomainException("La Box especificada no existe"));
 
         // Validar que el usuario sea dueño o miembro compartido de la Box
@@ -39,12 +39,12 @@ public class ManageBoxService implements ManageBoxUseCase {
                 .orElseThrow(() -> new DomainException("El producto o lote no existe"));
 
         // ===== VALIDACIONES CONTEXTUALES DE COMPRA Y VENTA =====
-        if (box instanceof SaleEvent || box instanceof FullRelocationEvent) {
+        if (box instanceof SaleBox || box instanceof FullRelocationBox) {
             // Contexto VENTA: El ítem a vender debe pertenecer al vendedor dueño de la Box
             if (!item.getSellerId().equals(command.userId())) {
                 throw new DomainException("Solo puedes agregar a una Box de Venta productos de los cuales seas propietario.");
             }
-        } else if (box instanceof PurchaseEvent) {
+        } else if (box instanceof PurchaseBox) {
             // Contexto COMPRA: El usuario está armando su lista de deseos/mudanza para comprar
             if (item.getSellerId().equals(command.userId())) {
                 throw new DomainException("No puedes agregar tus propios productos a una Box de Compra.");

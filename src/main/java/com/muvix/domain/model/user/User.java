@@ -5,7 +5,7 @@ import java.util.Objects;
 
 /**
  * Single user entity. "Seller" and "Buyer" are contextual roles assumed depending on the interaction:
- *  - User is Seller of a RelocationEvent if event.userId == user.id
+ *  - User is Seller of a Box if event.userId == user.id
  *  - User is Buyer of an Order / Offer if order.buyerId == user.id
  */
 public class User {

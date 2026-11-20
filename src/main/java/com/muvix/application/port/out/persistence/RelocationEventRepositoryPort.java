@@ -1,6 +1,6 @@
 package com.muvix.application.port.out.persistence;
 
-import com.muvix.domain.model.management.RelocationEvent;
+import com.muvix.domain.model.management.Box;
 
 import java.util.List;
 import java.util.Optional;
@@ -10,13 +10,13 @@ import java.util.Optional;
  */
 public interface RelocationEventRepositoryPort {
 
-    RelocationEvent save(RelocationEvent event);
+    Box save(Box event);
 
-    Optional<RelocationEvent> findById(Long id);
+    Optional<Box> findById(Long id);
 
-    Optional<RelocationEvent> findByShareToken(String shareToken);
+    Optional<Box> findByShareToken(String shareToken);
 
-    List<RelocationEvent> findByUserId(Long userId);
+    List<Box> findByUserId(Long userId);
 
     List<Long> findItemIdsByEventId(Long eventId);
 

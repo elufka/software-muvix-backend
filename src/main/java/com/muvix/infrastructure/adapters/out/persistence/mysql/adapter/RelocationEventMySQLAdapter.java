@@ -2,7 +2,7 @@ package com.muvix.infrastructure.adapters.out.persistence.mysql.adapter;
 
 import com.muvix.application.port.out.persistence.RelocationEventRepositoryPort;
 import com.muvix.domain.model.exception.DomainException;
-import com.muvix.domain.model.management.RelocationEvent;
+import com.muvix.domain.model.management.Box;
 import com.muvix.infrastructure.adapters.out.persistence.mysql.entity.RelocationEventJpaEntity;
 import com.muvix.infrastructure.adapters.out.persistence.mysql.mapper.RelocationEventPersistenceMapper;
 import com.muvix.infrastructure.adapters.out.persistence.mysql.repository.RelocationEventJpaRepository;
@@ -23,7 +23,7 @@ public class RelocationEventMySQLAdapter implements RelocationEventRepositoryPor
     }
 
     @Override
-    public RelocationEvent save(RelocationEvent event) {
+    public Box save(Box event) {
         RelocationEventJpaEntity existing = event.getId() == null
                 ? null
                 : repository.findById(event.getId())
@@ -35,19 +35,19 @@ public class RelocationEventMySQLAdapter implements RelocationEventRepositoryPor
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<RelocationEvent> findById(Long id) {
+    public Optional<Box> findById(Long id) {
         return repository.findById(id).map(RelocationEventPersistenceMapper::toDomain);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<RelocationEvent> findByShareToken(String shareToken) {
+    public Optional<Box> findByShareToken(String shareToken) {
         return repository.findByShareToken(shareToken).map(RelocationEventPersistenceMapper::toDomain);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<RelocationEvent> findByUserId(Long userId) {
+    public List<Box> findByUserId(Long userId) {
         return repository.findByUserId(userId).stream()
                 .map(RelocationEventPersistenceMapper::toDomain)
                 .toList();

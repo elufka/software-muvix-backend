@@ -2,7 +2,7 @@ package com.muvix.application.port.in.event;
 
 import com.muvix.domain.model.logistic.Location;
 import com.muvix.domain.model.management.DiscountRule;
-import com.muvix.domain.model.management.RelocationEvent;
+import com.muvix.domain.model.management.Box;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -37,7 +37,7 @@ public interface CreateRelocationEventUseCase {
             List<DiscountRule> discountRules
     ) {}
 
-    RelocationEvent createSaleBox(CreateSaleBoxCommand command);
-    RelocationEvent createPurchaseBox(CreatePurchaseBoxCommand command);
-    RelocationEvent createFullRelocationBox(CreateFullRelocationBoxCommand command);
+    Box createSaleBox(CreateSaleBoxCommand command);
+    Box createPurchaseBox(CreatePurchaseBoxCommand command);
+    Box createFullRelocationBox(CreateFullRelocationBoxCommand command);
 }

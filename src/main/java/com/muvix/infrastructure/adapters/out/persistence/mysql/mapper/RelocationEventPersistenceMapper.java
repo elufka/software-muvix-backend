@@ -2,10 +2,10 @@ package com.muvix.infrastructure.adapters.out.persistence.mysql.mapper;
 
 import com.muvix.domain.model.logistic.Location;
 import com.muvix.domain.model.management.DiscountRule;
-import com.muvix.domain.model.management.FullRelocationEvent;
-import com.muvix.domain.model.management.PurchaseEvent;
-import com.muvix.domain.model.management.RelocationEvent;
-import com.muvix.domain.model.management.SaleEvent;
+import com.muvix.domain.model.management.FullRelocationBox;
+import com.muvix.domain.model.management.PurchaseBox;
+import com.muvix.domain.model.management.Box;
+import com.muvix.domain.model.management.SaleBox;
 import com.muvix.infrastructure.adapters.out.persistence.mysql.entity.DiscountRuleJpaValue;
 import com.muvix.infrastructure.adapters.out.persistence.mysql.entity.RelocationEventJpaEntity;
 
@@ -15,26 +15,26 @@ public final class RelocationEventPersistenceMapper {
 
     private RelocationEventPersistenceMapper() {}
 
-    public static RelocationEvent toDomain(RelocationEventJpaEntity entity) {
+    public static Box toDomain(RelocationEventJpaEntity entity) {
         if (entity == null) return null;
 
         List<DiscountRule> rules = entity.getDiscountRules().stream()
                 .map(rule -> new DiscountRule(rule.getDaysLeft(), rule.getPercentage()))
                 .toList();
-        RelocationEvent.Status status = RelocationEvent.Status.valueOf(entity.getStatus().name());
+        Box.Status status = Box.Status.valueOf(entity.getStatus().name());
 
         return switch (entity.getEventType()) {
-            case SALE -> new SaleEvent(
+            case SALE -> new SaleBox(
                     entity.getId(), entity.getUserId(), entity.getTitle(),
                     location(entity.getOriginZone(), entity.getOriginExactAddress()),
                     entity.getSaleDeadline(), entity.getTakeItAllPrice(), rules,
                     entity.getShareToken(), status, entity.getSharedUserIds());
-            case PURCHASE -> new PurchaseEvent(
+            case PURCHASE -> new PurchaseBox(
                     entity.getId(), entity.getUserId(), entity.getTitle(),
                     location(entity.getDestinationZone(), entity.getDestinationExactAddress()),
                     entity.getArrivalDeliveryDate(), entity.getShareToken(), status,
                     entity.getSharedUserIds());
-            case FULL_RELOCATION -> new FullRelocationEvent(
+            case FULL_RELOCATION -> new FullRelocationBox(
                     entity.getId(), entity.getUserId(), entity.getTitle(),
                     location(entity.getOriginZone(), entity.getOriginExactAddress()),
                     location(entity.getDestinationZone(), entity.getDestinationExactAddress()),
@@ -45,7 +45,7 @@ public final class RelocationEventPersistenceMapper {
     }
 
     public static RelocationEventJpaEntity toEntity(
-            RelocationEvent event,
+            Box event,
             RelocationEventJpaEntity existing
     ) {
         if (event == null) return null;
@@ -59,7 +59,7 @@ public final class RelocationEventPersistenceMapper {
         entity.setSharedUserIds(event.getSharedUserIds().stream()
                 .collect(java.util.stream.Collectors.toCollection(java.util.HashSet::new)));
 
-        if (event instanceof SaleEvent sale) {
+        if (event instanceof SaleBox sale) {
             entity.setEventType(RelocationEventJpaEntity.EventTypeJpa.SALE);
             setOrigin(entity, sale.getOriginLocation());
             entity.setDestinationZone(null);
@@ -68,7 +68,7 @@ public final class RelocationEventPersistenceMapper {
             entity.setArrivalDeliveryDate(null);
             entity.setTakeItAllPrice(sale.getTakeItAllPrice());
             entity.setDiscountRules(toJpaRules(sale.getDiscountRules()));
-        } else if (event instanceof PurchaseEvent purchase) {
+        } else if (event instanceof PurchaseBox purchase) {
             entity.setEventType(RelocationEventJpaEntity.EventTypeJpa.PURCHASE);
             entity.setOriginZone(null);
             entity.setOriginExactAddress(null);
@@ -77,7 +77,7 @@ public final class RelocationEventPersistenceMapper {
             entity.setArrivalDeliveryDate(purchase.getArrivalDeliveryDate());
             entity.setTakeItAllPrice(null);
             entity.setDiscountRules(List.of());
-        } else if (event instanceof FullRelocationEvent full) {
+        } else if (event instanceof FullRelocationBox full) {
             entity.setEventType(RelocationEventJpaEntity.EventTypeJpa.FULL_RELOCATION);
             setOrigin(entity, full.getOriginLocation());
             setDestination(entity, full.getDestinationLocation());
