@@ -43,11 +43,19 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/api/v1/users/register", "/api/v1/users/connect/callback",
+                        .requestMatchers(
+                                "/api/v1/users/register",
+                                "/api/v1/users/connect/callback",
+                                "/api/v1/auth/register",
                                 "/api/v1/auth/login",
-                                "/api/v1/auth/2fa/enable", "/api/v1/auth/2fa/verify",
+                                "/api/v1/auth/refresh",
+                                "/api/v1/auth/logout",
+                                "/api/v1/auth/2fa/enable",
+                                "/api/v1/auth/2fa/verify",
                                 "/api/v1/escrow/webhook/mobbex",
-                                "/api/v1/locations/**")
+                                "/api/v1/locations/**",
+                                "/error"
+                        )
                         .permitAll()
                         .anyRequest().hasAuthority("SCOPE_access"))
                 .oauth2ResourceServer(resourceServer -> resourceServer.jwt(jwt ->

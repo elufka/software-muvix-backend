@@ -10,12 +10,18 @@ public final class Batch extends SellableItem {
 
     private final Set<Long> productIds = new HashSet<>();
 
-    public Batch(Long id, Long sellerId, String title, String description, BigDecimal price, State state, Set<Long> productIds) {
-        super(id, sellerId, title, description, price, state);
+    public Batch(Long id, Long sellerId, String title, String description, BigDecimal price,
+                 State state, String category, Set<Long> productIds) {
+        super(id, sellerId, title, description, price, state,category);
+        if (category == null || category.isBlank()) {
+            throw new DomainException("Category is required");
+        }
+        this.category = category.trim();
         if (productIds != null) this.productIds.addAll(productIds);
     }
 
-    public static Batch create(Long sellerId, String title, String description, Collection<Product> products, BigDecimal price) {
+    public static Batch create(Long sellerId, String title, String description,
+                               Collection<Product> products, BigDecimal price, String category) {
         if (products == null || products.size() < 2) {
             throw new DomainException("A batch requires at least 2 products");
         }
@@ -31,7 +37,7 @@ public final class Batch extends SellableItem {
             }
             ids.add(p.getId());
         }
-        return new Batch(null, sellerId, title, description, price, State.AVAILABLE, ids);
+        return new Batch(null, sellerId, title, description, price, State.AVAILABLE, category, ids);
     }
 
     public static BigDecimal sumIndividualPrices(Collection<Product> products) {

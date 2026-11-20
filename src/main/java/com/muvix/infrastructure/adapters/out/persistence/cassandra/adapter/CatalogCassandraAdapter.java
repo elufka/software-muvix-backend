@@ -5,6 +5,7 @@ import com.muvix.infrastructure.adapters.out.persistence.cassandra.entity.Catalo
 import com.muvix.infrastructure.adapters.out.persistence.cassandra.entity.PublicBoxCassandraEntity;
 import com.muvix.infrastructure.adapters.out.persistence.cassandra.repository.CatalogItemCassandraRepository;
 import com.muvix.infrastructure.adapters.out.persistence.cassandra.repository.PublicBoxCassandraRepository;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import java.util.List;

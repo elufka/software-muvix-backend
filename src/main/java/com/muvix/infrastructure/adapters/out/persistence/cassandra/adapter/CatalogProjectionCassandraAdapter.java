@@ -6,13 +6,13 @@ import com.muvix.domain.model.catalogue.Product;
 import com.muvix.domain.model.exception.DomainException;
 import com.muvix.infrastructure.adapters.out.persistence.cassandra.entity.CatalogItemCassandraEntity;
 import com.muvix.infrastructure.adapters.out.persistence.cassandra.repository.CatalogItemCassandraRepository;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
-
 @Component
 public class CatalogProjectionCassandraAdapter implements CatalogProjectionPort {
 

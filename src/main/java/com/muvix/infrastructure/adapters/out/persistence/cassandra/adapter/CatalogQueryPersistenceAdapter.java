@@ -2,10 +2,10 @@ package com.muvix.infrastructure.adapters.out.persistence.cassandra.adapter;
 
 import com.muvix.infrastructure.adapters.out.persistence.cassandra.entity.CatalogItemCassandraEntity;
 import com.muvix.infrastructure.adapters.out.persistence.cassandra.repository.CatalogItemCassandraRepository;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-
 @Component
 public class CatalogQueryPersistenceAdapter {
 

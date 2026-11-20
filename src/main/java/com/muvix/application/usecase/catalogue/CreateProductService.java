@@ -5,6 +5,7 @@ import com.muvix.application.port.out.persistence.CatalogProjectionPort;
 import com.muvix.application.port.out.persistence.SellableItemRepositoryPort;
 import com.muvix.domain.model.catalogue.Product;
 import com.muvix.domain.model.catalogue.SellableItem.State;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +31,7 @@ public class CreateProductService implements CreateProductUseCase {
                 command.description(),
                 command.price(),
                 command.category(),
+                command.condition(),
                 command.images()
         );
 

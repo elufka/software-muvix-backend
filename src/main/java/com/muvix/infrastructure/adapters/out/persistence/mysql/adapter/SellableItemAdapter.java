@@ -1,5 +1,7 @@
 package com.muvix.infrastructure.adapters.out.persistence.mysql.adapter;
 
+import com.muvix.application.port.in.catalogue.SellableItemQueryUseCase.CatalogFilterQuery;
+import com.muvix.application.port.in.catalogue.SellableItemQueryUseCase.CatalogPage;
 import com.muvix.application.port.out.persistence.SellableItemRepositoryPort;
 import com.muvix.domain.model.catalogue.Batch;
 import com.muvix.domain.model.catalogue.Product;
@@ -7,13 +9,18 @@ import com.muvix.domain.model.catalogue.SellableItem;
 import com.muvix.domain.model.exception.DomainException;
 import com.muvix.infrastructure.adapters.out.persistence.mysql.entity.BatchJpaEntity;
 import com.muvix.infrastructure.adapters.out.persistence.mysql.entity.ProductJpaEntity;
+import com.muvix.infrastructure.adapters.out.persistence.mysql.entity.SellableItemJpaEntity;
 import com.muvix.infrastructure.adapters.out.persistence.mysql.mapper.BatchPersistenceMapper;
 import com.muvix.infrastructure.adapters.out.persistence.mysql.mapper.ProductPersistenceMapper;
 import com.muvix.infrastructure.adapters.out.persistence.mysql.mapper.SellableItemPersistenceMapper;
 import com.muvix.infrastructure.adapters.out.persistence.mysql.repository.BatchJpaRepository;
 import com.muvix.infrastructure.adapters.out.persistence.mysql.repository.ProductJpaRepository;
 import com.muvix.infrastructure.adapters.out.persistence.mysql.repository.SellableItemJpaRepository;
+import               com.muvix.infrastructure.adapters.out.persistence.mysql.repository.specification.SellableItemSpecifications;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,7 +36,6 @@ public class SellableItemAdapter implements SellableItemRepositoryPort {
     private final SellableItemJpaRepository itemRepo;
     private final ProductJpaRepository productRepo;
     private final BatchJpaRepository batchRepo;
-
 
     @Override
     public SellableItem save(SellableItem item) {
@@ -82,21 +88,32 @@ public class SellableItemAdapter implements SellableItemRepositoryPort {
     }
 
     @Override
-    public void deleteById(Long id) {
-        SellableItem item = itemRepo.findById(id).map(SellableItemPersistenceMapper::toDomain)
-                .orElseThrow(() -> new DomainException("Sellable item not found: " + id));
-        if (item instanceof Batch batch) {
-            batch.deleteBatch();
-            save(batch);
-            return;
-        }
-        for (SellableItem candidate : findBySellerId(item.getSellerId())) {
-            if (candidate instanceof Batch batch && batch.getState() == SellableItem.State.AVAILABLE && batch.contains(id)) {
-                batch.removeProduct(id);
-                save(batch);
-            }
-        }
-        item.softDelete();
-        save(item);
+    @Transactional(readOnly = true)
+    public CatalogPage searchPublicCatalog(CatalogFilterQuery query) {
+        Sort sort = switch (query.sortBy()) {
+            case PRICE_ASC -> Sort.by(Sort.Direction.ASC, "price");
+            case PRICE_DESC -> Sort.by(Sort.Direction.DESC, "price");
+            case TITLE_ASC -> Sort.by(Sort.Direction.ASC, "title");
+            case TITLE_DESC -> Sort.by(Sort.Direction.DESC, "title");
+            case NEWEST -> Sort.by(Sort.Direction.DESC, "id");
+        };
+
+        PageRequest pageable = PageRequest.of(query.page(), query.size(), sort);
+        Page<SellableItemJpaEntity> resultPage = itemRepo.findAll(
+                SellableItemSpecifications.fromFilter(query),
+                pageable
+        );
+
+        List<SellableItem> domainItems = resultPage.getContent().stream()
+                .map(SellableItemPersistenceMapper::toDomain)
+                .toList();
+
+        return new CatalogPage(
+                domainItems,
+                resultPage.getNumber(),
+                resultPage.getSize(),
+                resultPage.getTotalElements(),
+                resultPage.getTotalPages()
+        );
     }
 }

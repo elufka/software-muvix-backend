@@ -83,15 +83,6 @@ public class UserController {
         return ResponseEntity.ok(updated);
     }
 
-    @PostMapping("/register")
-    public ResponseEntity<RegisterUserUseCase.RegistrationResult> registerUser(@Valid @RequestBody CreateUserRequest request) {
-        RegisterUserUseCase.RegisterUserCommand command = new RegisterUserUseCase.RegisterUserCommand(
-                request.name(), request.email(), request.phone(), request.password()
-        );
-        RegisterUserUseCase.RegistrationResult result = registerUserUseCase.registerUser(command);
-        return ResponseEntity.status(HttpStatus.CREATED).body(result);
-    }
-
     @PostMapping("/{id}/connect/mobbex-url")
     public ResponseEntity<Map<String, String>> getMobbexConnectUrl(
             @PathVariable Long id,

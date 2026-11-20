@@ -1,6 +1,7 @@
 package com.muvix.infrastructure.adapters.out.persistence.cassandra.repository;
 
 import com.muvix.infrastructure.adapters.out.persistence.cassandra.entity.CatalogItemCassandraEntity;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.cassandra.repository.CassandraRepository;
 import org.springframework.data.cassandra.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -8,6 +9,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
+@Profile("cassandra")
 public interface CatalogItemCassandraRepository extends CassandraRepository<CatalogItemCassandraEntity, String> {
 
     @Query("SELECT * FROM catalog_items_by_zone WHERE zone = ?0")

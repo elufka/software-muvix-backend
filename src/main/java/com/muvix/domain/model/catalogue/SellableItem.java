@@ -1,7 +1,7 @@
 package com.muvix.domain.model.catalogue;
 
 import com.muvix.domain.model.exception.DomainException;
-import jakarta.persistence.Version;
+import com.muvix.infrastructure.adapters.out.persistence.mysql.entity.enums.ProductCondition;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -9,27 +9,29 @@ import java.util.Set;
 
 public abstract sealed class SellableItem permits Product, Batch {
 
-    public enum Type { PRODUCT, BATCH }
-    public enum State { AVAILABLE, RESERVED, SOLD, SOFT_DELETED }
+    public enum Type { INDIVIDUAL, BATCH }
+    public enum State { AVAILABLE, PAUSED, RESERVED, SOLD, SOFT_DELETED }
 
     protected final Long id;
     protected final Long sellerId;
     protected String title;
     protected String description;
     protected BigDecimal price; // Price 0 = Private item
+    protected String category;
     protected State state;
-    @Version
-    private Long version; // ante problemas de OptimisticLockingFailureException o dos compradores reservando el mismo ítem a la vez
 
-    protected SellableItem(Long id, Long sellerId, String title, String description, BigDecimal price, State state) {
+    protected SellableItem(Long id, Long sellerId, String title, String description,
+                           BigDecimal price, State state, String category) {
         if (sellerId == null) throw new DomainException("Seller ID is required");
         if (title == null || title.isBlank()) throw new DomainException("Title is required");
+        if (category == null || category.isBlank()) throw new DomainException("Category is required");
 
         this.id = id;
         this.sellerId = sellerId;
         this.title = title;
         this.description = description;
         this.price = normalizePrice(price);
+        this.category = category.trim();
         this.state = state == null ? State.AVAILABLE : state;
     }
 
@@ -81,26 +83,29 @@ public abstract sealed class SellableItem permits Product, Batch {
         this.state = State.AVAILABLE;
     }
 
-    public void replaceDetails(String title, String description, BigDecimal price) {
+    public void replaceDetails(String title, String description, BigDecimal price, String category) {
         if (title == null || title.isBlank()) throw new DomainException("Title is required");
+        if (category == null || category.isBlank()) throw new DomainException("Category is required");
         if (state == State.SOLD || state == State.RESERVED || state == State.SOFT_DELETED)
             throw new DomainException("Unavailable items cannot be edited");
         this.title = title;
         this.description = description;
         this.price = normalizePrice(price);
+        this.category = category.trim();
     }
 
-    // Reconstruccion de sellableItem a Product usada
+    // Reconstrucción de SellableItem a Product
     public static Product reconstitute(Long id, Long sellerId, String title, String description,
                                        BigDecimal price, State state,
-                                       String category, List<String> images) {
-        return new Product(id, sellerId, title, description, price, state, category, images);
+                                       String category, ProductCondition condition, List<String> images) {
+        return new Product(id, sellerId, title, description, price, state, category, condition, images);
     }
 
-    // Reconstruccion de sellableItem a Batch
+    // Reconstrucción de SellableItem a Batch
     public static Batch reconstitute(Long id, Long sellerId, String title, String description,
-                                     BigDecimal price, State state, Set<Long> products) {
-        return new Batch(id, sellerId, title, description, price, state, products);
+                                     BigDecimal price, State state,
+                                     String category, Set<Long> products) {
+        return new Batch(id, sellerId, title, description, price, state, category, products);
     }
 
     public Long getId() { return id; }
@@ -109,5 +114,5 @@ public abstract sealed class SellableItem permits Product, Batch {
     public String getDescription() { return description; }
     public BigDecimal getPrice() { return price; }
     public State getState() { return state; }
-    public Long getVersion() { return version; }
+    public String getCategory() { return category; }
 }

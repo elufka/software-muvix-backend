@@ -1,28 +1,21 @@
 package com.muvix.application.port.in.security;
 
-import java.util.List;
-
 public interface TokenAuthenticationUseCase {
-
-    enum LoginStatus { TWO_FACTOR_SETUP_REQUIRED, TWO_FACTOR_CHALLENGE }
 
     record LoginCommand(String email, String password) {}
 
-    record LoginResult(LoginStatus status, String challengeToken, String provisioningUri) {}
+    record RefreshTokenCommand(String refreshToken) {}
 
-    record EnableTwoFactorCommand(String email, String password, String verificationCode) {}
+    record AccessToken(
+            String accessToken,
+            String refreshToken,
+            String tokenType,
+            long expiresInSeconds
+    ) {}
 
-    record TwoFactorChallengeCommand(String challengeToken, String verificationCode) {}
+    AccessToken login(LoginCommand command);
 
-    record AccessToken(String accessToken, String tokenType, long expiresInSeconds) {}
+    AccessToken refreshToken(RefreshTokenCommand command);
 
-    record EnableTwoFactorResult(List<String> recoveryCodes) {}
-
-    LoginResult login(LoginCommand command);
-
-    EnableTwoFactorResult enableTwoFactor(EnableTwoFactorCommand command);
-
-    AccessToken verifyTwoFactor(TwoFactorChallengeCommand command);
-
-    void disableTwoFactor(Long userId, String password, String verificationCode);
+    void logout(RefreshTokenCommand command);
 }

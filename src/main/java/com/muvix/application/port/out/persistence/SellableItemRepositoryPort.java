@@ -1,7 +1,10 @@
 package com.muvix.application.port.out.persistence;
 
+import com.muvix.application.port.in.catalogue.SellableItemQueryUseCase;
 import com.muvix.domain.model.catalogue.Product;
 import com.muvix.domain.model.catalogue.SellableItem;
+import com.muvix.application.port.in.catalogue.SellableItemQueryUseCase.CatalogPage;
+import com.muvix.application.port.in.catalogue.SellableItemQueryUseCase.CatalogFilterQuery;
 
 import java.util.List;
 import java.util.Optional;
@@ -20,5 +23,6 @@ public interface SellableItemRepositoryPort {
 
     List<SellableItem> findBySellerId(Long sellerId);
 
-    void deleteById(Long id);
+    CatalogPage searchPublicCatalog(CatalogFilterQuery query);
+
 }

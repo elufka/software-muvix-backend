@@ -6,6 +6,7 @@ import com.muvix.application.port.out.persistence.SellableItemRepositoryPort;
 import com.muvix.domain.model.catalogue.Batch;
 import com.muvix.domain.model.catalogue.Product;
 import com.muvix.domain.model.exception.DomainException;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,7 +37,7 @@ public class CreateBatchService implements CreateBatchUseCase {
         for (NewProductData pData : command.productsToCreate()) {
             Product product = Product.create(
                     command.sellerId(), pData.title(), pData.description(),
-                    pData.price(), pData.category(), pData.images()
+                    pData.price(), pData.category(),pData.condition(), pData.images()
             );
             Product saved = (Product) itemRepositoryPort.save(product);
             savedProducts.add(saved);
@@ -50,7 +51,7 @@ public class CreateBatchService implements CreateBatchUseCase {
         // 2. Armar la entidad Batch con los productos guardados con ID
         Batch batch = Batch.create(
                 command.sellerId(), command.batchTitle(), command.batchDescription(),
-                savedProducts, command.batchPrice()
+                savedProducts, command.batchPrice(),command.batchCategory()
         );
 
         Batch savedBatch = (Batch) itemRepositoryPort.save(batch);
@@ -75,7 +76,7 @@ public class CreateBatchService implements CreateBatchUseCase {
         // 2. Validar pertenencia al mismo vendedor y disponibilidad
         Batch batch = Batch.create(
                 command.sellerId(), command.batchTitle(), command.batchDescription(),
-                existingProducts, command.batchPrice()
+                existingProducts, command.batchPrice(), command.batchCategory()
         );
 
         Batch savedBatch = (Batch) itemRepositoryPort.save(batch);

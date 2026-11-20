@@ -13,7 +13,10 @@ import org.springframework.security.oauth2.jwt.Jwt;
 
 @RestController
 @RequestMapping("/api/v1/boxes")
-public class BoxController {
+public class
+
+
+BoxController {
 
     private final CreateRelocationEventUseCase createBoxUseCase;
     private final ManageBoxUseCase manageBoxUseCase;

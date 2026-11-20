@@ -12,6 +12,7 @@ import com.muvix.infrastructure.adapters.out.persistence.mysql.repository.Sellab
 import com.muvix.infrastructure.adapters.out.persistence.mysql.repository.UserMysqlRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import com.muvix.infrastructure.adapters.out.persistence.mysql.entity.enums.StateJpa;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -70,7 +71,7 @@ public class UserAccountLifecycleMySQLAdapter implements UserAccountLifecyclePor
     @Override
     public boolean hasActiveBusinessData(Long userId) {
         return !eventRepository.findByUserId(userId).isEmpty()
-                || itemRepository.existsBySellerIdAndState(userId, SellableItemJpaEntity.StateJpa.AVAILABLE);
+                || itemRepository.existsBySellerIdAndState(userId, StateJpa.AVAILABLE);
     }
 
     private List<OrderJpaEntity> findOrdersFor(Long userId) {

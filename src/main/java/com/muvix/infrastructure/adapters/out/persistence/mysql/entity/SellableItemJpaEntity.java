@@ -1,14 +1,20 @@
 package com.muvix.infrastructure.adapters.out.persistence.mysql.entity;
 
+import com.muvix.infrastructure.adapters.out.persistence.mysql.entity.enums.StateJpa;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.Set;
-
 @Entity
 @Table(name = "sellable_items")
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "item_type", discriminatorType = DiscriminatorType.STRING)
+@Getter
+@Setter
 public abstract class SellableItemJpaEntity {
 
     @Id
@@ -31,19 +37,11 @@ public abstract class SellableItemJpaEntity {
     @Column(nullable = false)
     private StateJpa state;
 
-    public enum StateJpa { AVAILABLE, RESERVED, SOLD, SOFT_DELETED }
+    @Column(nullable = false)
+    private String category;
 
-    // Getters y Setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-    public Long getSellerId() { return sellerId; }
-    public void setSellerId(Long sellerId) { this.sellerId = sellerId; }
-    public String getTitle() { return title; }
-    public void setTitle(String title) { this.title = title; }
-    public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
-    public BigDecimal getPrice() { return price; }
-    public void setPrice(BigDecimal price) { this.price = price; }
-    public StateJpa getState() { return state; }
-    public void setState(StateJpa state) { this.state = state; }
+    @Version private Long version;
+
+
+
 }

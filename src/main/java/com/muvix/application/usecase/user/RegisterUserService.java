@@ -2,7 +2,6 @@ package com.muvix.application.usecase.user;
 
 import com.muvix.application.port.in.user.RegisterUserUseCase;
 import com.muvix.application.port.out.persistence.UserRepositoryPort;
-import com.muvix.application.port.out.security.TwoFactorProviderPort;
 import com.muvix.application.port.out.security.UserAuthenticationPort;
 import com.muvix.domain.model.exception.DomainException;
 import com.muvix.domain.model.user.User;
@@ -15,22 +14,19 @@ public class RegisterUserService implements RegisterUserUseCase {
 
     private final UserRepositoryPort userRepository;
     private final UserAuthenticationPort authenticationPort;
-    private final TwoFactorProviderPort twoFactorProvider;
     private final PasswordEncoder passwordEncoder;
 
     public RegisterUserService(UserRepositoryPort userRepository,
                                UserAuthenticationPort authenticationPort,
-                               TwoFactorProviderPort twoFactorProvider,
                                PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.authenticationPort = authenticationPort;
-        this.twoFactorProvider = twoFactorProvider;
         this.passwordEncoder = passwordEncoder;
     }
 
     @Override
     @Transactional
-    public RegistrationResult registerUser(RegisterUserCommand command) {
+    public User registerUser(RegisterUserCommand command) {
         if (command == null) throw new DomainException("Registration data is required");
         if (command.password() == null || command.password().length() < 8) {
             throw new DomainException("Password must contain at least 8 characters");
@@ -40,16 +36,12 @@ public class RegisterUserService implements RegisterUserUseCase {
         }
 
         User user = userRepository.save(new User(null, command.name(), command.email(), command.phone()));
-        String secret = twoFactorProvider.generateSecret();
         authenticationPort.storeCredentials(
                 user.getId(),
                 passwordEncoder.encode(command.password()),
-                secret
+                null
         );
 
-        return new RegistrationResult(
-                user,
-                twoFactorProvider.createProvisioningUri(user.getEmail(), secret)
-        );
+        return user;
     }
 }

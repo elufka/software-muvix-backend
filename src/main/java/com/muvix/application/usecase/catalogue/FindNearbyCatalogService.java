@@ -6,6 +6,7 @@ import com.muvix.application.port.out.persistence.CatalogQueryPort;
 import com.muvix.domain.model.logistic.ZoneDetail;
 import com.muvix.infrastructure.adapters.out.persistence.cassandra.entity.CatalogItemCassandraEntity;
 import com.muvix.infrastructure.adapters.out.persistence.cassandra.entity.PublicBoxCassandraEntity;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
