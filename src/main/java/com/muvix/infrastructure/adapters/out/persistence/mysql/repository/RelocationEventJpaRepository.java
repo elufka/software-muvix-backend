@@ -2,6 +2,8 @@ package com.muvix.infrastructure.adapters.out.persistence.mysql.repository;
 
 import com.muvix.infrastructure.adapters.out.persistence.mysql.entity.RelocationEventJpaEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -14,6 +16,8 @@ public interface RelocationEventJpaRepository extends JpaRepository<RelocationEv
 
     List<RelocationEventJpaEntity> findByUserId(Long userId);
 
-    @org.springframework.data.jpa.repository.Query("select itemId from RelocationEventJpaEntity e join e.itemIds itemId where e.id = :eventId")
+    @Query("select itemId from RelocationEventJpaEntity e join e.itemIds itemId where e.id = :eventId")
     List<Long> findItemIdsByEventId(@org.springframework.data.repository.query.Param("eventId") Long eventId);
+
+    List<RelocationEventJpaEntity> findByUserIdAndEventType(Long userId, RelocationEventJpaEntity.EventTypeJpa eventType);
 }

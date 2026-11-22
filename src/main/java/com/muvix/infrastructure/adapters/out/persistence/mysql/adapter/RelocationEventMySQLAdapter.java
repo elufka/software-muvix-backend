@@ -6,6 +6,7 @@ import com.muvix.domain.model.management.RelocationEvent;
 import com.muvix.infrastructure.adapters.out.persistence.mysql.entity.RelocationEventJpaEntity;
 import com.muvix.infrastructure.adapters.out.persistence.mysql.mapper.RelocationEventPersistenceMapper;
 import com.muvix.infrastructure.adapters.out.persistence.mysql.repository.RelocationEventJpaRepository;
+import com.muvix.infrastructure.adapters.out.persistence.mysql.entity.RelocationEventJpaEntity.EventTypeJpa;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -58,6 +59,15 @@ public class RelocationEventMySQLAdapter implements RelocationEventRepositoryPor
     public List<Long> findItemIdsByEventId(Long eventId) {
         return repository.findItemIdsByEventId(eventId);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<RelocationEvent> findPurchaseBoxesByUserId(Long userId){
+        return repository.findByUserIdAndEventType(userId, EventTypeJpa.PURCHASE).stream()
+                .map(RelocationEventPersistenceMapper::toDomain)
+                .toList();
+    }
+
 
     @Override
     public void linkItemToBox(Long boxId, Long itemId) {

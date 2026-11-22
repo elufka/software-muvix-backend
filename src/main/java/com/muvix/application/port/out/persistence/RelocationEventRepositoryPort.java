@@ -1,6 +1,7 @@
 package com.muvix.application.port.out.persistence;
 
 import com.muvix.domain.model.management.RelocationEvent;
+import com.muvix.infrastructure.adapters.out.persistence.mysql.entity.RelocationEventJpaEntity.EventTypeJpa;
 
 import java.util.List;
 import java.util.Optional;
@@ -23,4 +24,6 @@ public interface RelocationEventRepositoryPort {
     void linkItemToBox(Long boxId, Long itemId);
 
     void unlinkItemFromBox(Long boxId, Long itemId);
+
+    List<RelocationEvent> findPurchaseBoxesByUserId(Long userId);
 }

@@ -2,12 +2,11 @@ package com.muvix.domain.model.management;
 
 import com.muvix.domain.model.exception.DomainException;
 import com.muvix.domain.model.logistic.Location;
+import com.muvix.domain.model.management.enums.BoxRole;
+
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public final class SaleEvent extends RelocationEvent {
 
@@ -18,8 +17,8 @@ public final class SaleEvent extends RelocationEvent {
 
     public SaleEvent(Long id, Long userId, String title, Location originLocation,
                      Instant saleDeadline, BigDecimal takeItAllPrice,
-                     List<DiscountRule> rules, String shareToken, Status status, Set<Long> sharedUserIds) {
-        super(id, userId, title, shareToken, status, sharedUserIds);
+                     List<DiscountRule> rules, String shareToken, Status status, Map<Long, BoxRole> participants) {
+        super(id, userId, title, shareToken, status, participants);
         if (originLocation == null) throw new DomainException("Origin location is required for sales");
         if (saleDeadline == null) throw new DomainException("Sale deadline is required for sales");
         if (takeItAllPrice == null || takeItAllPrice.signum() <= 0) {
