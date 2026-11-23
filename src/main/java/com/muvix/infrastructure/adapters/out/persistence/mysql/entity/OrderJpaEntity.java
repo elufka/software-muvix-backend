@@ -20,6 +20,12 @@ public class OrderJpaEntity {
     @Column(name = "buyer_id", nullable = false)
     private Long buyerId;
 
+    @Column(name = "buyer_name", length = 200)
+    private String buyerName;
+
+    @Column(name = "seller_name", length = 200)
+    private String sellerName;
+
     @ElementCollection
     @CollectionTable(name = "order_items", joinColumns = @JoinColumn(name = "order_id"))
     @Column(name = "item_id")
@@ -52,8 +58,8 @@ public class OrderJpaEntity {
     @Embedded
     private AuthorizedPickupPersonEmbeddable authorizedPerson;
 
-    @Column(name = "pickup_pin", length = 6)
-    private String pickupPin;
+    @Column(name = "pickup_pin_hash", length = 100)
+    private String pickupPinHash;
 
     @Column(name = "delivered_at")
     private Instant deliveredAt;
@@ -69,6 +75,10 @@ public class OrderJpaEntity {
     public void setEventId(Long eventId) { this.eventId = eventId; }
     public Long getBuyerId() { return buyerId; }
     public void setBuyerId(Long buyerId) { this.buyerId = buyerId; }
+    public String getBuyerName() { return buyerName; }
+    public void setBuyerName(String buyerName) { this.buyerName = buyerName; }
+    public String getSellerName() { return sellerName; }
+    public void setSellerName(String sellerName) { this.sellerName = sellerName; }
     public Set<Long> getItemIds() { return itemIds; }
     public void setItemIds(Set<Long> itemIds) { this.itemIds = itemIds; }
     public Set<Long> getSourceBatchIds() { return sourceBatchIds; }
@@ -85,8 +95,8 @@ public class OrderJpaEntity {
     public void setSlotId(Long slotId) { this.slotId = slotId; }
     public AuthorizedPickupPersonEmbeddable getAuthorizedPerson() { return authorizedPerson; }
     public void setAuthorizedPerson(AuthorizedPickupPersonEmbeddable authorizedPerson) { this.authorizedPerson = authorizedPerson; }
-    public String getPickupPin() { return pickupPin; }
-    public void setPickupPin(String pickupPin) { this.pickupPin = pickupPin; }
+    public String getPickupPinHash() { return pickupPinHash; }
+    public void setPickupPinHash(String pickupPinHash) { this.pickupPinHash = pickupPinHash; }
     public Instant getDeliveredAt() { return deliveredAt; }
     public void setDeliveredAt(Instant deliveredAt) { this.deliveredAt = deliveredAt; }
 }

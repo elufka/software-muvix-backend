@@ -29,9 +29,12 @@ public class SchedulePickupSlotService implements SchedulePickupSlotUseCase {
         if (!order.getBuyerId().equals(command.buyerId())) throw new DomainException("Only the buyer can start pickup scheduling");
         if (order.getDeliveryMethod() != Order.DeliveryMethod.PICKUP || order.getStatus() != Order.Status.PENDING_SLOT)
             throw new DomainException("Order is not awaiting a pickup slot");
+        if (order.getSlotId() != null) throw new DomainException("A pickup proposal already exists; use counter-propose");
         order.setAuthorizedPickupPerson(command.authorizedPerson());
+        PickupSlot saved = slots.save(PickupSlot.requestSlot(order.getId(), command.startTime(), command.endTime()));
+        order.attachPickupSlotProposal(saved.getId());
         orders.save(order);
-        return slots.save(PickupSlot.requestSlot(order.getId(), command.startTime(), command.endTime()));
+        return saved;
     }
 
     @Override @Transactional(readOnly = true)
@@ -52,6 +55,7 @@ public class SchedulePickupSlotService implements SchedulePickupSlotUseCase {
         PickupSlot slot = slots.findById(command.slotId()).filter(s -> s.getOrderId().equals(order.getId()))
                 .orElseThrow(() -> new DomainException("Pickup slot not found for this order"));
         if (order.getStatus() != Order.Status.PENDING_SLOT) throw new DomainException("Order no longer accepts pickup proposals");
+        if (!slot.getId().equals(order.getSlotId())) throw new DomainException("Only the current pickup proposal can be changed");
         slot.counterPropose(command.newStartTime(), command.newEndTime(), command.proposerId(), order.getBuyerId());
         return slots.save(slot);
     }
@@ -63,6 +67,7 @@ public class SchedulePickupSlotService implements SchedulePickupSlotUseCase {
         if (order.getStatus() != Order.Status.PENDING_SLOT) throw new DomainException("Order is not awaiting a pickup slot");
         PickupSlot slot = slots.findById(slotId).filter(s -> s.getOrderId().equals(order.getId()))
                 .orElseThrow(() -> new DomainException("Pickup slot not found for this order"));
+        if (!slotId.equals(order.getSlotId())) throw new DomainException("Only the current pickup proposal can be confirmed");
         slot.confirm(userId, order.getBuyerId(), sellerId);
         PickupSlot saved = slots.save(slot);
         if (saved.isConfirmed()) {

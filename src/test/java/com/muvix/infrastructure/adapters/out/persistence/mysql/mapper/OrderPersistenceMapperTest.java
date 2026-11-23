@@ -12,20 +12,23 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class OrderPersistenceMapperTest {
 
     @Test
-    void roundTripsPickupSecurityDataAndDeliveredStatus() {
-        Order order = new Order(null, 2L, 3L, Set.of(4L), new BigDecimal("25.00"),
+    void roundTripsPickupSecurityDataAndConfirmedStatus() {
+        Order order = new Order(null, 2L, 3L, "Buyer Name", "Seller Name", Set.of(4L), new BigDecimal("25.00"),
                 Order.Origin.DIRECT_PURCHASE, Order.DeliveryMethod.PICKUP, null,
                 Order.Status.PENDING_SLOT);
         order.setAuthorizedPickupPerson(new AuthorizedPickupPerson("Pickup Person", "DOC-1", "555-0100"));
         order.confirmSlot(5L);
-        order.completePickup(order.getPickupPin().pinCode());
-        String pin = order.getPickupPin().pinCode();
+        String pinHash = "$2a$12$test-hash-for-pickup-pin";
+        order.assignPickupPinHash(pinHash);
 
         Order restored = OrderPersistenceMapper.toDomain(OrderPersistenceMapper.toEntity(order));
 
         assertEquals(order.getItemIds(), restored.getItemIds());
-        assertEquals(Order.Status.DELIVERED, restored.getStatus());
-        assertEquals(pin, restored.getPickupPin().pinCode());
+        assertEquals("Buyer Name", restored.getBuyerName());
+        assertEquals("Seller Name", restored.getSellerName());
+        assertEquals(Order.Status.SLOT_CONFIRMED, restored.getStatus());
+        assertEquals(pinHash, restored.getPickupPinHash());
+        assertEquals("Buyer Name", restored.getBuyerName());
         assertEquals("DOC-1", restored.getAuthorizedPickupPerson().documentId());
         assertEquals(order.getDeliveredAt(), restored.getDeliveredAt());
     }

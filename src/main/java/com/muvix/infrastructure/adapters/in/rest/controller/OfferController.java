@@ -24,10 +24,14 @@ public class OfferController {
                 new ManageOfferUseCase.CreateOfferCommand(Long.valueOf(jwt.getSubject()), request.itemId(), request.amount())));
     }
     @PostMapping("/{offerId}/accept")
-    public ResponseEntity<PlaceOrderUseCase.CheckoutResult> accept(@AuthenticationPrincipal Jwt jwt,
-                                                                         @PathVariable Long offerId) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(placeOrder.executeOfferPurchase(
-                new PlaceOrderUseCase.AcceptOfferPurchaseCommand(Long.valueOf(jwt.getSubject()), offerId)));
+    public ResponseEntity<OrderController.CheckoutResponse> accept(@AuthenticationPrincipal Jwt jwt,
+                                                                   @PathVariable Long offerId,
+                                                                   @RequestBody(required = false) PickupProposalRequest request) {
+        PlaceOrderUseCase.PickupSlotProposal pickupSlot = request == null ? null
+                : OrderController.pickupProposal(request.pickupStartTime(), request.pickupEndTime(), request.authorizedPerson());
+        PlaceOrderUseCase.CheckoutResult result = placeOrder.executeOfferPurchase(
+                new PlaceOrderUseCase.AcceptOfferPurchaseCommand(Long.valueOf(jwt.getSubject()), offerId, pickupSlot));
+        return ResponseEntity.status(HttpStatus.CREATED).body(OrderController.toCheckoutResponse(result));
     }
     @PostMapping("/{offerId}/reject")
     public ResponseEntity<Offer> reject(@AuthenticationPrincipal Jwt jwt, @PathVariable Long offerId) {
@@ -38,4 +42,6 @@ public class OfferController {
         return ResponseEntity.ok(manageOffers.get(offerId,Long.valueOf(jwt.getSubject())));
     }
     public record CreateOfferRequest(Long itemId, BigDecimal amount) {}
+    public record PickupProposalRequest(java.time.Instant pickupStartTime, java.time.Instant pickupEndTime,
+                                        com.muvix.domain.model.logistic.AuthorizedPickupPerson authorizedPerson) {}
 }

@@ -42,15 +42,22 @@ sequenceDiagram
   participant Service as PlaceOrderService
   participant Items as SellableItemRepositoryPort
   participant Orders as OrderRepositoryPort
+  participant Slots as PickupSlotRepositoryPort
   participant Mobbex as MobbexGatewayPort
+  participant History as order_confirmed_events
   Buyer->>API: POST direct purchase (selected item IDs, optional purchase event)
   API->>Service: executeDirectPurchase (buyer from JWT)
   Service->>Items: load items and source batches
   Service->>Orders: save pending order
+  opt buyer includes initial pickup proposal
+    Service->>Slots: save proposed pickup slot and link its ID to order
+  end
   Service->>Items: reserve selected items and batch children
   Service->>Mobbex: create checkout
   Mobbex-->>Service: checkout URL and operation ID
   Service->>Service: attach operation ID to pending escrow
+  Service->>Service: publish OrderConfirmedEvent with buyerName and sellerName
+  Service->>History: transactional listener persists immutable name snapshot
   Service-->>API: CheckoutResult(order, checkoutUrl)
   API-->>Buyer: order and payment URL
 ```
@@ -78,6 +85,46 @@ sequenceDiagram
   Cancel->>Inventory: restore item and source batch memberships
   Cancel-->>API: persist cancelled order and escrow
   API-->>Buyer: success
+```
+
+La entrega requiere un horario confirmado por ambas partes; el vendedor autenticado envía el PIN aportado por la persona autorizada.
+
+El PIN solo se revela ante una solicitud explícita del comprador, después de confirmar el horario y retener el pago. Cada solicitud rota el valor anterior; la base guarda el hash BCrypt.
+
+```mermaid
+sequenceDiagram
+  actor Buyer
+  participant API as PickupController
+  participant Issue as IssuePickupPinService
+  participant Orders as OrderRepositoryPort
+  participant Hash as BCryptPickupPinHashAdapter
+  Buyer->>API: POST /api/v1/pickups/orders/{id}/pin (JWT)
+  API->>Issue: issue(orderId, buyer JWT subject)
+  Issue->>Orders: verify buyer, confirmed slot and held payment
+  Issue->>Hash: hash newly generated PIN
+  Issue->>Orders: save BCrypt hash
+  Issue-->>API: raw PIN for this response only
+  API-->>Buyer: pickupPin
+```
+
+```mermaid
+sequenceDiagram
+  actor Seller
+  participant API as PickupController
+  participant Complete as CompletePickupService
+  participant Slot as PickupSlotRepositoryPort
+  participant Items as SellableItemRepositoryPort
+  participant Orders as OrderRepositoryPort
+  participant Escrow as EscrowAccountRepositoryPort
+  Seller->>API: POST /api/v1/pickups/orders/{id}/complete (pickupPin)
+  API->>Complete: complete(orderId, seller JWT subject, PIN)
+  Complete->>Orders: load order and slot ID
+  Complete->>Items: verify seller owns ordered item
+  Complete->>Slot: verify linked slot is confirmed
+  Complete->>Escrow: verify payment is HELD
+  Complete->>Complete: BCrypt match and set DELIVERED; clear hash
+  Complete->>Orders: save delivered order and deliveredAt
+  API-->>Seller: 204 No Content
 ```
 
 Para cercanía en particular, el caso `FindNearbyCatalogService` resuelve zona mediante `LocationGatewayPort`, obtiene una lista de zonas y solicita artículos/cajas por zona a `CatalogQueryPort`. El adaptador incluido de OpenStreetMap responde hoy solo con la zona central ante consulta de zonas cercanas.
@@ -184,9 +231,20 @@ erDiagram
     bigint id PK
     bigint event_id nullable
     bigint buyer_id
+    string buyer_name nullable
+    string seller_name nullable
+    string pickup_pin_hash nullable
     decimal total
     string origin
     string status
+  }
+  ORDER_CONFIRMED_EVENTS {
+    bigint order_id PK, FK
+    string buyer_name
+    string seller_name
+    bigint event_id nullable
+    decimal total_amount
+    datetime occurred_on
   }
   ORDER_SOURCE_BATCHES {
     bigint order_id FK
@@ -237,10 +295,11 @@ erDiagram
   SELLABLE_ITEMS ||--o{ BATCH_PRODUCTS : element_collection
   ORDERS ||--o{ ORDER_ITEMS : element_collection
   ORDERS ||--o{ ORDER_SOURCE_BATCHES : element_collection
+  ORDERS ||--o| ORDER_CONFIRMED_EVENTS : immutable_name_snapshot
   DISPUTES ||--o{ DISPUTE_EVIDENCE : element_collection
 ```
 
-`ESCROW_ACCOUNTS.order_id` is a shared identifier by convention but the inspected entity does not declare a JPA relationship to `ORDERS`; `PICKUP_SLOTS.order_id` similarly remains a scalar. Cassandra catalog tables are read projections and are intentionally excluded from this relational DER.
+`ESCROW_ACCOUNTS.order_id` is a shared identifier by convention but the inspected entity does not declare a JPA relationship to `ORDERS`; `PICKUP_SLOTS.order_id` similarly remains a scalar. `ORDER_CONFIRMED_EVENTS.order_id` is created as a foreign key by the manual MySQL migration, while its JPA entity maps the key as a scalar. Cassandra catalog tables are read projections and are intentionally excluded from this relational DER.
 
 ## Arquitectura propuesta para búsqueda en mapa (no implementada)
 

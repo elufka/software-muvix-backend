@@ -7,7 +7,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class BatchLifecycleTest {
     @Test void removingMemberBelowMinimumSoftDeletesBatchAndKeepsRemainingProductIndependent() {
-        Batch batch = new Batch(10L, 3L, "set", "", BigDecimal.TEN, SellableItem.State.AVAILABLE, Set.of(1L, 2L));
+        Batch batch = new Batch(10L, 3L, "set", "", BigDecimal.TEN, SellableItem.State.AVAILABLE,
+                "Other", Set.of(1L, 2L));
         batch.removeProduct(1L);
         assertEquals(SellableItem.State.SOFT_DELETED, batch.getState());
         assertEquals(Set.of(2L), batch.getProductIds());

@@ -27,18 +27,18 @@ class RegisterUserServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new RegisterUserService(users, authentication, twoFactor, encoder);
+        service = new RegisterUserService(users, authentication, encoder);
     }
 
     @Test
-    void hashesPasswordAndReturnsTwoFactorSetupUri() {
+    void hashesPasswordWithoutEnrollingTwoFactorDuringRegistration() {
         var result = service.registerUser(new com.muvix.application.port.in.user.RegisterUserUseCase.RegisterUserCommand(
                 "Buyer", "buyer@example.test", "555", "a-long-password"));
 
-        assertEquals(9L, result.user().getId());
-        assertEquals("otpauth://totp/Muvix:buyer@example.test", result.qrCodeTwoFactorUrl());
+        assertEquals(9L, result.getId());
+        assertEquals("Buyer", result.getName());
         assertEquals("bcrypt:a-long-password", authentication.savedPasswordHash);
-        assertEquals("totp-secret", authentication.savedTotpSecret);
+        assertEquals(null, authentication.savedTotpSecret);
     }
 
     @Test

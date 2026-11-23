@@ -1,7 +1,6 @@
 package com.muvix.domain.model.transaction;
 
 import com.muvix.domain.model.logistic.AuthorizedPickupPerson;
-import com.muvix.domain.model.logistic.PickupPin;
 import com.muvix.domain.model.exception.DomainException;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -17,6 +16,8 @@ public class Order {
     private final Long id;
     private final Long eventId;
     private final Long buyerId;
+    private final String buyerName;
+    private final String sellerName;
     private final Set<Long> itemIds = new HashSet<>();
     private final Set<Long> sourceBatchIds = new HashSet<>();
     private final BigDecimal total;
@@ -26,11 +27,17 @@ public class Order {
     private Status status;
 
     private AuthorizedPickupPerson authorizedPickupPerson;
-    private PickupPin pickupPin;
+    private String pickupPinHash;
     private Instant deliveredAt;
 
     public Order(Long id, Long eventId, Long buyerId, Set<Long> itemIds, BigDecimal total,
                  Origin origin, DeliveryMethod deliveryMethod, Long slotId, Status status) {
+        this(id, eventId, buyerId, null, null, itemIds, total, origin, deliveryMethod, slotId, status);
+    }
+
+    public Order(Long id, Long eventId, Long buyerId, String buyerName, String sellerName,
+                 Set<Long> itemIds, BigDecimal total, Origin origin, DeliveryMethod deliveryMethod,
+                 Long slotId, Status status) {
         if (buyerId == null) throw new DomainException("Buyer is required");
         if (itemIds == null || itemIds.isEmpty()) throw new DomainException("Order must contain at least one item");
         if (total == null || total.signum() <= 0) throw new DomainException("Invalid total amount");
@@ -38,6 +45,8 @@ public class Order {
         this.id = id;
         this.eventId = eventId;
         this.buyerId = buyerId;
+        this.buyerName = buyerName;
+        this.sellerName = sellerName;
         this.itemIds.addAll(itemIds);
         this.total = total;
         this.origin = origin;
@@ -48,20 +57,38 @@ public class Order {
 
     public static Order restore(Long id, Long eventId, Long buyerId, Set<Long> itemIds, BigDecimal total,
                                 Origin origin, DeliveryMethod deliveryMethod, Long slotId, Status status,
-                                AuthorizedPickupPerson authorizedPickupPerson, String pickupPin, Instant deliveredAt) {
-        Order order = new Order(id, eventId, buyerId, itemIds, total, origin, deliveryMethod, slotId, status);
+                                AuthorizedPickupPerson authorizedPickupPerson, String pickupPinHash, Instant deliveredAt) {
+        return restore(id, eventId, buyerId, null, null, itemIds, total, origin, deliveryMethod, slotId,
+                status, authorizedPickupPerson, pickupPinHash, deliveredAt);
+    }
+
+    public static Order restore(Long id, Long eventId, Long buyerId, String buyerName, String sellerName,
+                                Set<Long> itemIds, BigDecimal total, Origin origin, DeliveryMethod deliveryMethod,
+                                Long slotId, Status status, AuthorizedPickupPerson authorizedPickupPerson,
+                                String pickupPinHash, Instant deliveredAt) {
+        Order order = new Order(id, eventId, buyerId, buyerName, sellerName, itemIds, total, origin,
+                deliveryMethod, slotId, status);
         order.authorizedPickupPerson = authorizedPickupPerson;
-        order.pickupPin = pickupPin == null ? null : new PickupPin(pickupPin);
+        order.pickupPinHash = pickupPinHash;
         order.deliveredAt = deliveredAt;
         return order;
     }
 
     public static Order restore(Long id, Long eventId, Long buyerId, Set<Long> itemIds, Set<Long> sourceBatchIds,
                                 BigDecimal total, Origin origin, DeliveryMethod deliveryMethod, Long slotId,
-                                Status status, AuthorizedPickupPerson authorizedPickupPerson, String pickupPin,
+                                Status status, AuthorizedPickupPerson authorizedPickupPerson, String pickupPinHash,
                                 Instant deliveredAt) {
-        Order order = restore(id,eventId,buyerId,itemIds,total,origin,deliveryMethod,slotId,status,
-                authorizedPickupPerson,pickupPin,deliveredAt);
+        return restore(id, eventId, buyerId, null, null, itemIds, sourceBatchIds, total, origin,
+                deliveryMethod, slotId, status, authorizedPickupPerson, pickupPinHash, deliveredAt);
+    }
+
+    public static Order restore(Long id, Long eventId, Long buyerId, String buyerName, String sellerName,
+                                Set<Long> itemIds, Set<Long> sourceBatchIds, BigDecimal total, Origin origin,
+                                DeliveryMethod deliveryMethod, Long slotId, Status status,
+                                AuthorizedPickupPerson authorizedPickupPerson, String pickupPinHash,
+                                Instant deliveredAt) {
+        Order order = restore(id,eventId,buyerId,buyerName,sellerName,itemIds,total,origin,deliveryMethod,slotId,status,
+                authorizedPickupPerson,pickupPinHash,deliveredAt);
         if (sourceBatchIds != null) order.sourceBatchIds.addAll(sourceBatchIds);
         return order;
     }
@@ -70,10 +97,15 @@ public class Order {
         if (deliveryMethod != DeliveryMethod.PICKUP) {
             throw new DomainException("Authorized person is only applicable for pickup orders");
         }
+        if (person == null) throw new DomainException("Authorized pickup person is required");
         this.authorizedPickupPerson = person;
-        if (this.pickupPin == null) {
-            this.pickupPin = PickupPin.generate();
-        }
+    }
+
+    public void assignPickupPinHash(String encodedPin) {
+        if (authorizedPickupPerson == null) throw new DomainException("Authorized pickup person is required before issuing a PIN");
+        if (encodedPin == null || encodedPin.isBlank()) throw new DomainException("Encoded pickup PIN is required");
+        if (status != Status.SLOT_CONFIRMED) throw new DomainException("Pickup PIN can only be issued after the slot is confirmed");
+        this.pickupPinHash = encodedPin;
     }
 
     public void confirmSlot(Long slotId) {
@@ -83,6 +115,13 @@ public class Order {
         }
         this.slotId = slotId;
         this.status = Status.SLOT_CONFIRMED;
+    }
+
+    public void attachPickupSlotProposal(Long slotId) {
+        if (status != Status.PENDING_SLOT) throw new DomainException("Order is not awaiting a pickup slot");
+        if (deliveryMethod != DeliveryMethod.PICKUP) throw new DomainException("Order is not a pickup order");
+        if (slotId == null) throw new DomainException("Pickup slot ID is required");
+        this.slotId = slotId;
     }
 
     public void cancelBeforeSellerPickup() {
@@ -95,13 +134,12 @@ public class Order {
         if (batchIds != null) sourceBatchIds.addAll(batchIds);
     }
 
-    public void completePickup(String providedPin) {
+    public void completePickup() {
         if (status != Status.SLOT_CONFIRMED) throw new DomainException("Order is not in slot confirmed status");
-        if (pickupPin == null || !pickupPin.validate(providedPin)) {
-            throw new DomainException("Invalid verification PIN for pickup");
-        }
+        if (pickupPinHash == null) throw new DomainException("Buyer must request a pickup PIN before delivery");
         this.status = Status.DELIVERED;
         this.deliveredAt = Instant.now();
+        this.pickupPinHash = null;
     }
 
     public boolean canViewExactAddress() {
@@ -111,6 +149,8 @@ public class Order {
     public Long getId() { return id; }
     public Long getEventId() { return eventId; }
     public Long getBuyerId() { return buyerId; }
+    public String getBuyerName() { return buyerName; }
+    public String getSellerName() { return sellerName; }
     public Set<Long> getItemIds() { return Set.copyOf(itemIds); }
     public Set<Long> getSourceBatchIds() { return Set.copyOf(sourceBatchIds); }
     public BigDecimal getTotal() { return total; }
@@ -119,6 +159,6 @@ public class Order {
     public Long getSlotId() { return slotId; }
     public Status getStatus() { return status; }
     public AuthorizedPickupPerson getAuthorizedPickupPerson() { return authorizedPickupPerson; }
-    public PickupPin getPickupPin() { return pickupPin; }
+    public String getPickupPinHash() { return pickupPinHash; }
     public Instant getDeliveredAt() { return deliveredAt; }
 }

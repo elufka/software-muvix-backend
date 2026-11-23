@@ -22,6 +22,7 @@ public class PickupSlot {
     private boolean sellerConfirmed;
 
     public PickupSlot(Long id, Long orderId, Instant startTime, Instant endTime, SlotStatus status) {
+        if (orderId == null) throw new DomainException("Order ID is required");
         if (startTime == null || endTime == null) throw new DomainException("Start and end time are required");
         if (endTime.isBefore(startTime)) throw new DomainException("End time cannot be before start time");
         this.id = id;
@@ -39,7 +40,9 @@ public class PickupSlot {
         if (status == SlotStatus.CONFIRMED) {
             throw new DomainException("Cannot modify an already confirmed pickup slot");
         }
+        if (newStartTime == null || newEndTime == null) throw new DomainException("Start and end time are required");
         if (newEndTime.isBefore(newStartTime)) throw new DomainException("End time cannot be before start time");
+        if (proposerId == null || buyerId == null) throw new DomainException("Pickup slot proposer is required");
         this.proposedStartTime = newStartTime;
         this.proposedEndTime = newEndTime;
         this.status = proposerId.equals(buyerId) ? SlotStatus.PROPOSED_BY_BUYER : SlotStatus.PROPOSED_BY_SELLER;
@@ -51,7 +54,8 @@ public class PickupSlot {
         if (status == SlotStatus.REJECTED) {
             throw new DomainException("Cannot confirm a rejected slot proposal");
         }
-        if (userId == null || (!userId.equals(buyerId) && !userId.equals(sellerId)))
+        if (userId == null || buyerId == null || sellerId == null
+                || (!userId.equals(buyerId) && !userId.equals(sellerId)))
             throw new DomainException("Only order participants can confirm a pickup slot");
         if (userId.equals(buyerId)) buyerConfirmed = true;
         if (userId.equals(sellerId)) sellerConfirmed = true;

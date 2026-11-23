@@ -19,6 +19,8 @@ public final class OrderPersistenceMapper {
                 entity.getId(),
                 entity.getEventId(),
                 entity.getBuyerId(),
+                entity.getBuyerName(),
+                entity.getSellerName(),
                 entity.getItemIds(),
                 entity.getSourceBatchIds(),
                 entity.getTotal(),
@@ -27,7 +29,7 @@ public final class OrderPersistenceMapper {
                 entity.getSlotId(),
                 Order.Status.valueOf(entity.getStatus().name()),
                 person,
-                entity.getPickupPin(),
+                entity.getPickupPinHash(),
                 entity.getDeliveredAt()
         );
     }
@@ -38,6 +40,8 @@ public final class OrderPersistenceMapper {
         entity.setId(order.getId());
         entity.setEventId(order.getEventId());
         entity.setBuyerId(order.getBuyerId());
+        entity.setBuyerName(order.getBuyerName());
+        entity.setSellerName(order.getSellerName());
         entity.setItemIds(new java.util.HashSet<>(order.getItemIds()));
         entity.setSourceBatchIds(new java.util.HashSet<>(order.getSourceBatchIds()));
         entity.setTotal(order.getTotal());
@@ -56,7 +60,7 @@ public final class OrderPersistenceMapper {
             persistedPerson.setPhone(person.phone());
             entity.setAuthorizedPerson(persistedPerson);
         }
-        entity.setPickupPin(order.getPickupPin() == null ? null : order.getPickupPin().pinCode());
+        entity.setPickupPinHash(order.getPickupPinHash());
         return entity;
     }
 }

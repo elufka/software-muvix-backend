@@ -8,10 +8,15 @@ import com.muvix.application.port.out.persistence.OrderRepositoryPort;
 import com.muvix.application.port.out.persistence.OfferRepositoryPort;
 import com.muvix.application.port.out.persistence.RelocationEventRepositoryPort;
 import com.muvix.application.port.out.persistence.SellableItemRepositoryPort;
+import com.muvix.application.port.out.persistence.UserRepositoryPort;
+import com.muvix.application.port.out.persistence.PickupSlotRepositoryPort;
 import com.muvix.domain.model.catalogue.SellableItem;
 import com.muvix.domain.model.catalogue.Batch;
 import com.muvix.domain.model.catalogue.Product;
 import com.muvix.domain.model.exception.DomainException;
+import com.muvix.domain.model.event.OrderConfirmedEvent;
+import com.muvix.domain.model.logistic.PickupSlot;
+import com.muvix.domain.model.user.User;
 import com.muvix.domain.model.management.Box;
 import com.muvix.domain.model.management.SaleBox;
 import com.muvix.domain.model.negotiation.Offer;
@@ -33,10 +38,13 @@ public class PlaceOrderService implements PlaceOrderUseCase {
     private final MobbexGatewayPort mobbex;
     private final OfferRepositoryPort offers;
     private final EventPublisherPort eventPublisher;
+    private final UserRepositoryPort users;
+    private final PickupSlotRepositoryPort pickupSlots;
 
     public PlaceOrderService(SellableItemRepositoryPort items, RelocationEventRepositoryPort events,
                              OrderRepositoryPort orders, EscrowAccountRepositoryPort escrows,
-                             MobbexGatewayPort mobbex, OfferRepositoryPort offers, EventPublisherPort eventPublisher) {
+                             MobbexGatewayPort mobbex, OfferRepositoryPort offers, EventPublisherPort eventPublisher,
+                             UserRepositoryPort users, PickupSlotRepositoryPort pickupSlots) {
         this.items = items;
         this.events = events;
         this.orders = orders;
@@ -44,6 +52,8 @@ public class PlaceOrderService implements PlaceOrderUseCase {
         this.mobbex = mobbex;
         this.offers = offers;
         this.eventPublisher = eventPublisher;
+        this.users = users;
+        this.pickupSlots = pickupSlots;
     }
 
     @Override
@@ -61,7 +71,7 @@ public class PlaceOrderService implements PlaceOrderUseCase {
         List<SellableItem> selected = command.itemIds().stream().map(id -> items.findById(id)
                 .orElseThrow(() -> new DomainException("Sellable item not found: " + id))).toList();
         return checkout(command.buyerId(), command.eventId(), selected, Order.Origin.DIRECT_PURCHASE,
-                null, "Muvix direct purchase");
+                null, "Muvix direct purchase", command.pickupSlot());
     }
 
     @Override
@@ -80,7 +90,7 @@ public class PlaceOrderService implements PlaceOrderUseCase {
                 .filter(item -> item != null && item.canBePurchased()).toList();
         if (available.isEmpty()) throw new DomainException("The sale event has no currently available items");
         return checkout(command.buyerId(), sale.getId(), available, Order.Origin.TAKE_IT_ALL,
-                sale.getTakeItAllPrice(), "Muvix Take It All: " + sale.getTitle());
+                sale.getTakeItAllPrice(), "Muvix Take It All: " + sale.getTitle(), command.pickupSlot());
     }
 
     @Override
@@ -93,11 +103,12 @@ public class PlaceOrderService implements PlaceOrderUseCase {
         offers.save(offer);
         eventPublisher.publishAll(offer.getDomainEvents());
         return checkout(offer.getBuyerId(), null, List.of(item), Order.Origin.ACCEPTED_OFFER,
-                offer.getAmount(), "Muvix accepted offer " + offer.getId());
+                offer.getAmount(), "Muvix accepted offer " + offer.getId(), command.pickupSlot());
     }
 
     private CheckoutResult checkout(Long buyerId, Long eventId, List<SellableItem> selected,
-                                                            Order.Origin origin, BigDecimal fixedPrice, String description) {
+                                    Order.Origin origin, BigDecimal fixedPrice, String description,
+                                    PickupSlotProposal pickupProposal) {
         if (selected.isEmpty()) throw new DomainException("Order must contain at least one available item");
         Long seller = selected.get(0).getSellerId();
         if (selected.stream().anyMatch(item -> !seller.equals(item.getSellerId())))
@@ -123,11 +134,23 @@ public class PlaceOrderService implements PlaceOrderUseCase {
                 .filter(batch -> batch.getState() == SellableItem.State.AVAILABLE
                         && selectedProductIds.stream().anyMatch(batch::contains))
                 .map(Batch::getId).collect(java.util.stream.Collectors.toSet());
-        Order pendingOrder = new Order(null, eventId, buyerId,
+        User buyer = users.findById(buyerId).orElseThrow(() -> new DomainException("Buyer not found"));
+        User sellerUser = users.findById(seller).orElseThrow(() -> new DomainException("Seller not found"));
+        Order pendingOrder = new Order(null, eventId, buyerId, buyer.getName(), sellerUser.getName(),
                 Set.copyOf(selected.stream().map(SellableItem::getId).toList()), total,
                 origin, Order.DeliveryMethod.PICKUP, null, Order.Status.PENDING_SLOT);
         pendingOrder.recordSourceBatchIds(sourceBatchIds);
+        if (pickupProposal != null) {
+            if (pickupProposal.authorizedPerson() == null) throw new DomainException("Authorized pickup person is required with a proposed slot");
+            pendingOrder.setAuthorizedPickupPerson(pickupProposal.authorizedPerson());
+        }
         Order order = orders.save(pendingOrder);
+        if (pickupProposal != null) {
+            PickupSlot slot = pickupSlots.save(PickupSlot.requestSlot(
+                    order.getId(), pickupProposal.startTime(), pickupProposal.endTime()));
+            order.attachPickupSlotProposal(slot.getId());
+            order = orders.save(order);
+        }
         EscrowAccount escrow = new EscrowAccount(order.getId(), total);
         for (SellableItem item : selected) {
             item.reserve();
@@ -146,6 +169,8 @@ public class PlaceOrderService implements PlaceOrderUseCase {
                 order.getId().toString(), total, description, ""));
         escrow.attachExternalOperationId(payment.mobbexPaymentId());
         escrows.save(escrow);
+        eventPublisher.publish(new OrderConfirmedEvent(order.getId(), order.getBuyerName(), order.getSellerName(),
+                order.getEventId(), order.getTotal()));
         return new CheckoutResult(order, payment.checkoutUrl());
     }
 }

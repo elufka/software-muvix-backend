@@ -62,6 +62,13 @@ El código sigue una intención hexagonal (`application.port.*`, servicios de ca
 - **Ventajas:** orden, escrow e inventario vuelven a estados coherentes según las reglas confirmadas.
 - **Riesgos/costo:** el refund del proveedor y la transacción SQL no son atómicos; mantener reconciliación/idempotencia y contemplar fallos entre ambos. El snapshot requiere migración de esquema en despliegues existentes.
 
+### 10. Historial de nombres y verificación de retiro incompletos
+- **Módulos / evidencia:** `OrderConfirmedEvent`, `PlaceOrderService`, `OrderJpaEntity`, `OrderConfirmedEventPersistenceListener`, `SchedulePickupSlotService`, `CompletePickupService`.
+- **Problema:** el evento no guardaba nombres ni se publicaba/persistía; el ciclo de pickup podía acordar una fecha, pero carecía de endpoint de entrega con PIN.
+- **Solución aplicada:** compra guarda buyer/seller name snapshots en `orders` y emite un `OrderConfirmedEvent` sin buyer ID; listener transaccional los escribe en `order_confirmed_events`. Los checkouts aceptan horario inicial/persona autorizada opcionales. Se enlaza el slot al pedido; ambos participantes deben confirmar. Tras pago `HELD`, el comprador solicita explícitamente el PIN y recibe el valor nuevo una sola vez; BCrypt almacena/verifica el hash. El vendedor finaliza pickup después de pago retenido, slot confirmado y PIN válido. Ninguna respuesta de orden expone el PIN.
+- **Ventajas:** historial visible por nombre aun si cambian perfiles y la entrega queda verificada por PIN y rol del actor.
+- **Riesgos/costo:** `ddl-auto=validate` requiere ejecutar el script manual de MySQL antes del deploy. Una solicitud posterior rota el PIN anterior; el comprador debe compartir de nuevo el PIN actualizado con la persona autorizada.
+
 ### 8. Identidad del actor recibida por body/query
 - **Módulos / evidencia:** `OrderController`, `PickupController`, `DisputeController`, `BoxController`, `OfferController`, `SellableItemController`.
 - **Problema:** el cliente podía enviar identificadores de comprador/vendedor ajenos al token.
@@ -83,12 +90,12 @@ El código sigue una intención hexagonal (`application.port.*`, servicios de ca
 - El callback Mobbex verifica el estado consultando la operación por reference con credenciales server-to-server y evita repetir la transición vendida; el proveedor documenta webhooks inbound, consulta de operación por referencia e idempotencia necesaria ([referencia oficial Mobbex](https://www.mobbex.com/desarrolladores/postman/)). No se implementó verificación HMAC porque la colección oficial indica que se usa si está configurada; confirmar configuración real de la cuenta y reforzar idempotencia/rechazo de pagos antes de producción.
 - Operaciones externas de checkout/refund/capture y transacciones SQL no son atómicas; aplicar outbox/saga/reconciliación.
 - Faltan endpoints de listado general para pedidos, ofertas, disputas, slots y artículos; las consultas por ID de órdenes, ofertas, disputas, escrow y slots validan participantes.
-- No hay almacenamiento append-only para `AuditLog`; no hay migraciones versionadas para nuevas tablas/columnas.
+- No hay almacenamiento append-only general para `AuditLog` ni Flyway/Liquibase. El cambio de snapshots de nombre incluye un script MySQL manual para cumplir con `ddl-auto=validate` en producción.
 - El mapa interactivo y la búsqueda geoespacial no se implementaron. La cercanía actual agrupa por zonas y el adapter de zona cercana no calcula vecinos ni distancia exacta.
 - Requiere validar el esquema real de MySQL/PostgreSQL y las URLs/credenciales del entorno: el POM, nombres de paquetes y perfiles no acreditan por sí solos la base desplegada.
 
 ## Verificación
 
 - `mvn -q -DskipTests compile`: completó correctamente en el árbol actualizado.
-- `mvn -q test`: 14 tests, 0 fallos, 0 errores y 0 omitidos. Se alineó `BatchLifecycleTest` con la retención de membresías necesarias para restaurar lotes al reembolsar; el contexto Spring arrancó con perfil de test y H2.
-- El contexto Spring arrancó en unos 13 segundos en la última ejecución. El log mostró advertencias de escaneo de repositorios multi-store y `open-in-view`. No se verificó una instancia de producción, base real ni credenciales/proveedor externo.
+- `mvn -q test`: 23 tests, 0 fallos, 0 errores y 0 omitidos. Incluye persistencia del evento con nombres, checkout con propuesta inicial de pickup, emisión explícita/rotación del PIN y verificación BCrypt antes de entregar.
+- El contexto Spring arrancó con perfil de test y H2. El log mostró advertencias de escaneo de repositorios multi-store y `open-in-view`. No se verificó una instancia de producción, la aplicación de la migración MySQL ni credenciales/proveedor externo.
