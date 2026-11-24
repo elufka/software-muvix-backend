@@ -46,6 +46,8 @@ public interface SellableItemQueryUseCase {
 
     List<SellableItem> getBySellerId(Long sellerId);
 
+    List<SellableItem> getByStorageItemBySellerId(Long sellerId); // Agarramos las publicaciones con price 0 (storage items) del user autenticado
+
     SellableItem getPublicById(Long itemId);
 
     CatalogPage searchPublicCatalog(CatalogFilterQuery query);

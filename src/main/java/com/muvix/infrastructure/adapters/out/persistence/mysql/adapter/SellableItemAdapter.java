@@ -65,6 +65,7 @@ public class SellableItemAdapter implements SellableItemRepositoryPort {
         return batchRepo.save(managed);
     }
 
+
     @Override
     @Transactional(readOnly = true)
     public Optional<SellableItem> findById(Long id) {

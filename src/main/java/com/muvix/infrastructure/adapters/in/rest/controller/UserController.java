@@ -61,7 +61,7 @@ public class UserController {
         var user = manageUserProfileUseCase.getProfile(Long.valueOf(jwt.getSubject()));
         return ResponseEntity.ok(user);
     }
-
+/*
     @PutMapping("/me")
     public ResponseEntity<User> replaceMyProfile(
             @AuthenticationPrincipal Jwt jwt,
@@ -82,7 +82,7 @@ public class UserController {
                         current.getId(), current.getName(), current.getEmail(), request.phone()));
         return ResponseEntity.ok(updated);
     }
-
+*/
     @PostMapping("/{id}/connect/mobbex-url")
     public ResponseEntity<Map<String, String>> getMobbexConnectUrl(
             @PathVariable Long id,

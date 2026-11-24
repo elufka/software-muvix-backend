@@ -33,7 +33,15 @@ public class SellableItemQueryService implements SellableItemQueryUseCase {
     @Override
     public List<SellableItem> getBySellerId(Long sellerId) {
         return itemRepositoryPort.findBySellerId(sellerId).stream()
-                .filter(item -> item.getState() != SellableItem.State.SOFT_DELETED)
+                .filter(item -> item.getState() != SellableItem.State.SOFT_DELETED && item.isPublic())
+                .toList();
+    }
+
+
+    @Override
+    public List<SellableItem> getByStorageItemBySellerId(Long sellerId) {
+        return itemRepositoryPort.findBySellerId(sellerId).stream()
+                .filter(item -> item.getState() == SellableItem.State.PAUSED  && !item.isPublic())
                 .toList();
     }
 
@@ -42,9 +50,6 @@ public class SellableItemQueryService implements SellableItemQueryUseCase {
         SellableItem item = itemRepositoryPort.findById(itemId)
                 .orElseThrow(() -> new DomainException("Sellable item not found"));
 
-        if (!item.isAvailable() || item.getPrice().signum() <= 0) {
-            throw new DomainException("This item is not publicly available");
-        }
         return item;
     }
 

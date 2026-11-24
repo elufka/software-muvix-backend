@@ -9,6 +9,7 @@ import com.muvix.domain.model.management.SaleBox;
 import com.muvix.infrastructure.adapters.out.persistence.mysql.entity.DiscountRuleJpaValue;
 import com.muvix.infrastructure.adapters.out.persistence.mysql.entity.RelocationEventJpaEntity;
 
+import java.util.HashMap;
 import java.util.List;
 
 public final class RelocationEventPersistenceMapper {
@@ -28,19 +29,19 @@ public final class RelocationEventPersistenceMapper {
                     entity.getId(), entity.getUserId(), entity.getTitle(),
                     location(entity.getOriginZone(), entity.getOriginExactAddress()),
                     entity.getSaleDeadline(), entity.getTakeItAllPrice(), rules,
-                    entity.getShareToken(), status, entity.getSharedUserIds());
+                    entity.getShareToken(), status, entity.getParticipants());
             case PURCHASE -> new PurchaseBox(
                     entity.getId(), entity.getUserId(), entity.getTitle(),
                     location(entity.getDestinationZone(), entity.getDestinationExactAddress()),
                     entity.getArrivalDeliveryDate(), entity.getShareToken(), status,
-                    entity.getSharedUserIds());
+                    entity.getParticipants());
             case FULL_RELOCATION -> new FullRelocationBox(
                     entity.getId(), entity.getUserId(), entity.getTitle(),
                     location(entity.getOriginZone(), entity.getOriginExactAddress()),
                     location(entity.getDestinationZone(), entity.getDestinationExactAddress()),
                     entity.getSaleDeadline(), entity.getArrivalDeliveryDate(),
                     entity.getTakeItAllPrice(), rules, entity.getShareToken(), status,
-                    entity.getSharedUserIds());
+                    entity.getParticipants());
         };
     }
 
@@ -56,8 +57,7 @@ public final class RelocationEventPersistenceMapper {
         entity.setTitle(event.getTitle());
         entity.setShareToken(event.getUniqueShareToken());
         entity.setStatus(RelocationEventJpaEntity.StatusJpa.valueOf(event.getStatus().name()));
-        entity.setSharedUserIds(event.getSharedUserIds().stream()
-                .collect(java.util.stream.Collectors.toCollection(java.util.HashSet::new)));
+        entity.setParticipants(new HashMap<>(event.getParticipants()));
 
         if (event instanceof SaleBox sale) {
             entity.setEventType(RelocationEventJpaEntity.EventTypeJpa.SALE);

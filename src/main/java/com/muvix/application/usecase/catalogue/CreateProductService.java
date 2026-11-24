@@ -24,7 +24,6 @@ public class CreateProductService implements CreateProductUseCase {
     @Override
     @Transactional
     public Product createProduct(CreateProductCommand command) {
-        // 1. Crear entidad de Dominio
         Product product = Product.create(
                 command.sellerId(),
                 command.title(),
@@ -35,12 +34,11 @@ public class CreateProductService implements CreateProductUseCase {
                 command.images()
         );
 
-        // 2. Persistir en MySQL (Transactional Write Model)
+
         Product savedProduct = (Product) itemRepositoryPort.save(product);
 
-        // 3. Proyectar en Cassandra (Read Model para Homepage y Búsquedas) si es público
         if (savedProduct.isPublic()) {
-            catalogProjectionPort.projectProductToCatalog(savedProduct, command.zone(), command.boxId());
+            catalogProjectionPort.projectProductToCatalog(savedProduct, command.boxId());
         }
 
         return savedProduct;

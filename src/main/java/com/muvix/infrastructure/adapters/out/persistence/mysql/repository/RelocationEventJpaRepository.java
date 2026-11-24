@@ -14,6 +14,8 @@ public interface RelocationEventJpaRepository extends JpaRepository<RelocationEv
 
     List<RelocationEventJpaEntity> findByUserId(Long userId);
 
+    List<RelocationEventJpaEntity> findByUserIdAndEventType(Long userId, RelocationEventJpaEntity.EventTypeJpa eventType);
+
     @org.springframework.data.jpa.repository.Query("select itemId from RelocationEventJpaEntity e join e.itemIds itemId where e.id = :eventId")
     List<Long> findItemIdsByEventId(@org.springframework.data.repository.query.Param("eventId") Long eventId);
 }

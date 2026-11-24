@@ -28,12 +28,14 @@ public final class Batch extends SellableItem {
 
         Set<Long> ids = new HashSet<>();
         for (Product p : products) {
-            if (p.getId() == null) throw new DomainException("Products must be saved prior to assembling a batch");
+            if (p.getId() == null) {
+                throw new DomainException("Products must be saved prior to assembling a batch");
+            }
             if (!p.getSellerId().equals(sellerId)) {
                 throw new DomainException("All products must belong to the same seller");
             }
-            if (!p.isAvailable()) {
-                throw new DomainException("Product '" + p.getTitle() + "' is not available");
+            if (!p.canBePurchased()) {
+                throw new DomainException("Product '" + p.getTitle() + "' must be public and available");
             }
             ids.add(p.getId());
         }
@@ -95,4 +97,8 @@ public final class Batch extends SellableItem {
     public Type type() { return Type.BATCH; }
 
     public Set<Long> getProductIds() { return Set.copyOf(productIds); }
+
+    public boolean canBePurchased() {
+        return isPublic() && isAvailable();
+    }
 }

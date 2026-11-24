@@ -2,6 +2,7 @@ package com.muvix.infrastructure.adapters.in.rest.controller.publication.mapper;
 
 import com.muvix.application.port.in.catalogue.CreateBatchUseCase;
 import com.muvix.application.port.in.catalogue.CreateProductUseCase;
+import com.muvix.application.port.in.catalogue.CreateStorageItemUseCase;
 import com.muvix.application.port.in.catalogue.ManageSellableItemUseCase;
 import com.muvix.application.port.in.catalogue.SellableItemQueryUseCase.CatalogPage;
 import com.muvix.domain.model.catalogue.Batch;
@@ -18,19 +19,25 @@ public class PublicationRestMapper {
 
     public CreateProductUseCase.CreateProductCommand toCommand(Long sellerId, CreateProductRequest r) {
         return new CreateProductUseCase.CreateProductCommand(
-                sellerId, r.title(), r.description(), r.price(), r.category(), r.condition() ,r.zone(), r.images(), r.boxId()
+                sellerId, r.title(), r.description(), r.price(), r.category(), r.condition() , r.images(), r.boxId()
         );
     }
 
     public CreateBatchUseCase.CreateBatchFromScratchCommand toScratchCommand(Long sellerId, CreateBatchRequest r) {
         return new CreateBatchUseCase.CreateBatchFromScratchCommand(
-                sellerId, r.title(), r.description(), r.price(), r.zone(), r.category(), r.productsToCreate()
+                sellerId, r.title(), r.description(), r.price(), r.category(), r.productsToCreate()
+        );
+    }
+
+    public CreateStorageItemUseCase.CreateStoragareItemCommand toCommand(Long sellerId, CreateStoragareItemRequest r) {
+        return new CreateStorageItemUseCase.CreateStoragareItemCommand(
+                sellerId, r.title(), r.description(),r.category(), r.condition() , r.images()
         );
     }
 
     public CreateBatchUseCase.CreateBatchFromExistingCommand toExistingCommand(Long sellerId, CreateBatchRequest r) {
         return new CreateBatchUseCase.CreateBatchFromExistingCommand(
-                sellerId, r.title(), r.description(), r.price(), r.zone(), r.category(), r.existingProductIds()
+                sellerId, r.title(), r.description(), r.price(), r.category(), r.existingProductIds()
         );
     }
 
@@ -49,7 +56,7 @@ public class PublicationRestMapper {
                     p.getTitle(),
                     p.getDescription(),
                     p.getPrice(),
-                    p.getState().name(),
+                    "AVAILABLE",
                     p.getCategory(),
                     p.getCondition(),
                     p.getImages() != null ? p.getImages() : List.of(),

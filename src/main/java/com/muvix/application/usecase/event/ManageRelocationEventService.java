@@ -16,12 +16,16 @@ public class ManageRelocationEventService implements ManageRelocationEventUseCas
         Box old=find(c.eventId()); if(!old.getUserId().equals(c.userId()))throw new DomainException("Only the event owner can replace it");
         if(old.getStatus()==Box.Status.CANCELLED||old.getStatus()==Box.Status.COMPLETED)throw new DomainException("Closed events cannot be edited");
         Box updated;
-        if(old instanceof SaleBox) updated=new SaleBox(old.getId(),old.getUserId(),c.title(),c.originLocation(),c.saleDeadline(),c.takeItAllPrice(),c.discountRules(),old.getUniqueShareToken(),old.getStatus(),old.getSharedUserIds());
-        else if(old instanceof PurchaseBox) updated=new PurchaseBox(old.getId(),old.getUserId(),c.title(),c.destinationLocation(),c.arrivalDeliveryDate(),old.getUniqueShareToken(),old.getStatus(),old.getSharedUserIds());
-        else if(old instanceof FullRelocationBox) updated=new FullRelocationBox(old.getId(),old.getUserId(),c.title(),c.originLocation(),c.destinationLocation(),c.saleDeadline(),c.arrivalDeliveryDate(),c.takeItAllPrice(),c.discountRules(),old.getUniqueShareToken(),old.getStatus(),old.getSharedUserIds());
+        if(old instanceof SaleBox) updated=new SaleBox(old.getId(),old.getUserId(),c.title(),c.originLocation(),c.saleDeadline(),c.takeItAllPrice(),c.discountRules(),old.getUniqueShareToken(),old.getStatus(),old.getParticipants());
+        else if(old instanceof PurchaseBox) updated=new PurchaseBox(old.getId(),old.getUserId(),c.title(),c.destinationLocation(),c.arrivalDeliveryDate(),old.getUniqueShareToken(),old.getStatus(),old.getParticipants());
+        else if(old instanceof FullRelocationBox) updated=new FullRelocationBox(old.getId(),old.getUserId(),c.title(),c.originLocation(),c.destinationLocation(),c.saleDeadline(),c.arrivalDeliveryDate(),c.takeItAllPrice(),c.discountRules(),old.getUniqueShareToken(),old.getStatus(),old.getParticipants());
         else throw new DomainException("Unsupported event type");
         return events.save(updated);
     }
-    @Override @Transactional public void cancel(Long id,Long userId){Box event=find(id);if(!event.getUserId().equals(userId))throw new DomainException("Only the event owner can cancel it");event.cancel();events.save(event);}
+    @Override @Transactional public void cancel(Long id,Long userId){
+        Box box=find(id);if(!box.getUserId().equals(userId))throw new DomainException("Only the event owner can cancel it");
+        box.cancel(userId);
+        events.save(box);
+    }
     private Box find(Long id){return events.findById(id).orElseThrow(()->new DomainException("Event not found"));}
 }

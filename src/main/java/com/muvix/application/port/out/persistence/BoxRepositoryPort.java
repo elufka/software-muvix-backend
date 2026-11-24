@@ -1,6 +1,8 @@
 package com.muvix.application.port.out.persistence;
 
 import com.muvix.domain.model.management.Box;
+import com.muvix.domain.model.management.FullRelocationBox;
+import com.muvix.infrastructure.adapters.in.rest.controller.BoxController;
 
 import java.util.List;
 import java.util.Optional;
@@ -23,4 +25,6 @@ public interface BoxRepositoryPort {
     void linkItemToBox(Long boxId, Long itemId);
 
     void unlinkItemFromBox(Long boxId, Long itemId);
+
+    List<Box> findPurchaseBoxesByUserId(Long userId);
 }

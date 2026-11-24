@@ -3,6 +3,7 @@ package com.muvix.application.port.in.event;
 import com.muvix.domain.model.logistic.Location;
 import com.muvix.domain.model.management.DiscountRule;
 import com.muvix.domain.model.management.Box;
+import com.muvix.domain.model.management.FullRelocationBox;
 
 import java.math.BigDecimal;
 import java.time.Instant;

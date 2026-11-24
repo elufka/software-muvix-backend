@@ -60,6 +60,14 @@ public class BoxMySQLAdapter implements BoxRepositoryPort {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<Box> findPurchaseBoxesByUserId(Long userId){
+        return repository.findByUserIdAndEventType(userId, RelocationEventJpaEntity.EventTypeJpa.PURCHASE).stream()
+                .map(RelocationEventPersistenceMapper::toDomain)
+                .toList();
+    }
+
+    @Override
     public void linkItemToBox(Long boxId, Long itemId) {
         RelocationEventJpaEntity event = repository.findById(boxId)
                 .orElseThrow(() -> new DomainException("Relocation event not found: " + boxId));

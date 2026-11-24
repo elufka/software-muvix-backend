@@ -33,6 +33,11 @@ public final class Product extends SellableItem {
         return new Product(null, sellerId, title, description, price, State.AVAILABLE, category, condition, images);
     }
 
+    public static Product createStorageItem(Long sellerId, String title, String description,
+                                            String category, ProductCondition condition, List<String> images) {
+        return new Product(null, sellerId, title, description, BigDecimal.ZERO, State.PAUSED, category, condition, images);
+    }
+
     // Para reconstruir un producto existente desde la base de datos
     public static Product reconstitute(Long id, Long sellerId, String title, String description, BigDecimal price,
                                        State state, String category, ProductCondition condition, List<String> images) {
@@ -66,7 +71,10 @@ public final class Product extends SellableItem {
 
     public void updateDetails(String title, String description, BigDecimal price,
                               String category, ProductCondition condition, List<String> images) {
-        super.replaceDetails(title, description, price,category);
+
+        boolean wasPrivate = !this.isPublic();
+
+        super.replaceDetails(title, description, price, category);
 
         if (category == null || category.isBlank()) {
             throw new DomainException("Category is required");
@@ -77,7 +85,12 @@ public final class Product extends SellableItem {
         this.category = category.trim();
         this.condition = condition;
         this.images = validateAndNormalizeImages(images);
+
+        if (wasPrivate && this.price.signum() > 0 && this.state == State.PAUSED) {
+            this.state = State.AVAILABLE;
+        }
     }
+
 
     @Override
     public Type type() {

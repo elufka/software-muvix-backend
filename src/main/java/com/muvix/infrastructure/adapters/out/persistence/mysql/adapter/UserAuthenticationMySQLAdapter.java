@@ -107,7 +107,8 @@ public class UserAuthenticationMySQLAdapter implements UserAuthenticationPort {
     private AuthenticationAccount toAccount(UserJpaEntity entity) {
         return new AuthenticationAccount(
                 entity.getId(),
-                entity.getName(),
+                entity.getFirstName(),
+                entity.getLastName(),
                 entity.getEmail(),
                 entity.getPasswordHash(),
                 entity.getTwoFactorSecret(),

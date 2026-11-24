@@ -24,7 +24,6 @@ public interface CreateBatchUseCase {
             String batchDescription,
             BigDecimal batchPrice,
             String batchCategory,
-            String zone,
             List<NewProductData> productsToCreate
     ) {}
 
@@ -34,7 +33,6 @@ public interface CreateBatchUseCase {
             String batchDescription,
             BigDecimal batchPrice,
             String batchCategory,
-            String zone,
             Set<Long> existingProductIds
     ) {}
 

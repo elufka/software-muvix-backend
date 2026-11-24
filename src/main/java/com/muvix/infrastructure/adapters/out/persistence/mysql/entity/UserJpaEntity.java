@@ -1,25 +1,47 @@
 package com.muvix.infrastructure.adapters.out.persistence.mysql.entity;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
 
 @Entity
 @Table(name = "users")
+@Getter @Setter
 public class UserJpaEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "photo", length = 512)
+    private String photo;
+
     @Column(nullable = false)
-    private String name;
+    private String firstName;
+
+    @Column(nullable = false)
+    private String lastName;
 
     @Column(nullable = false, unique = true)
     private String email;
 
     private String phone;
+
+    @Column(nullable = false)
+    private String country;
+
+    @Column(nullable = false)
+    private String province;
+
+    @Column(nullable = false)
+    private String city;
+
+    @Column(nullable = false)
+    private String address;
 
     @Column(name = "password_hash")
     private String passwordHash;
@@ -93,8 +115,6 @@ public class UserJpaEntity {
     // Getters y Setters regular
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
     public String getPhone() { return phone; }

@@ -17,7 +17,8 @@ public interface UserAuthenticationPort {
 
     record AuthenticationAccount(
             Long userId,
-            String name,
+            String firstName,
+            String lastName,
             String email,
             String passwordHash,
             String twoFactorSecret,

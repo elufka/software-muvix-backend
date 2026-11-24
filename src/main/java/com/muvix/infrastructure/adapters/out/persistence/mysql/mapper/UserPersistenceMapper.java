@@ -14,11 +14,22 @@ public final class UserPersistenceMapper {
             return null;
         }
 
+        User.Role domainRole = (entity.getRole() != null)
+                ? User.Role.valueOf(entity.getRole().name())
+                : User.Role.USER;
+
         return new User(
                 entity.getId(),
-                entity.getName(),
+                entity.getPhoto(),
+                entity.getFirstName(),
+                entity.getLastName(),
                 entity.getEmail(),
-                entity.getPhone()
+                entity.getPhone(),
+                entity.getCountry(),
+                entity.getProvince(),
+                entity.getCity(),
+                entity.getAddress(),
+                domainRole
         );
     }
 
@@ -38,8 +49,13 @@ public final class UserPersistenceMapper {
             return;
         }
 
-        entity.setName(domain.getName());
+        entity.setFirstName(domain.getFirstName());
+        entity.setLastName(domain.getLastName());
         entity.setEmail(domain.getEmail());
         entity.setPhone(domain.getPhone());
+        entity.setCountry(domain.getCountry());
+        entity.setProvince(domain.getProvince());
+        entity.setCity(domain.getCity());
+        entity.setAddress(domain.getAddress());
     }
 }

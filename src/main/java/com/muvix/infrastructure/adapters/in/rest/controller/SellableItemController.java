@@ -9,6 +9,7 @@ import com.muvix.infrastructure.adapters.in.rest.controller.publication.dto.Publ
 import com.muvix.infrastructure.adapters.in.rest.controller.publication.mapper.PublicationRestMapper;
 import com.muvix.infrastructure.adapters.out.persistence.mysql.entity.enums.ProductCondition;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -20,25 +21,16 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/publication")
+@RequiredArgsConstructor
 public class SellableItemController {
 
     private final CreateProductUseCase createProduct;
     private final CreateBatchUseCase createBatch;
+    private final CreateStorageItemUseCase createStorageItemUseCase;
     private final ManageSellableItemUseCase manageItems;
     private final SellableItemQueryUseCase queryItems;
     private final PublicationRestMapper mapper;
 
-    public SellableItemController(CreateProductUseCase createProduct,
-                                  CreateBatchUseCase createBatch,
-                                  ManageSellableItemUseCase manageItems,
-                                  SellableItemQueryUseCase queryItems,
-                                  PublicationRestMapper mapper) {
-        this.createProduct = createProduct;
-        this.createBatch = createBatch;
-        this.manageItems = manageItems;
-        this.queryItems = queryItems;
-        this.mapper = mapper;
-    }
 
     @PostMapping("/individual")
     public ResponseEntity<PublicationResponse> createProduct(@AuthenticationPrincipal Jwt jwt,
@@ -54,6 +46,13 @@ public class SellableItemController {
         Batch saved = (r.existingProductIds() == null || r.existingProductIds().isEmpty())
                 ? createBatch.createFromScratch(mapper.toScratchCommand(sellerId, r))
                 : createBatch.createFromExisting(mapper.toExistingCommand(sellerId, r));
+        return ResponseEntity.status(HttpStatus.CREATED).body(mapper.toResponse(saved));
+    }
+
+    @PostMapping("/storage")
+    public ResponseEntity<PublicationResponse> createStorageItem(@AuthenticationPrincipal Jwt jwt,
+                                                           @Valid @RequestBody CreateStoragareItemRequest r) {
+        Product saved = createStorageItemUseCase.createStorageItem(mapper.toCommand(userId(jwt), r));
         return ResponseEntity.status(HttpStatus.CREATED).body(mapper.toResponse(saved));
     }
 
@@ -74,13 +73,21 @@ public class SellableItemController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<PublicationResponse> getPublicById(@PathVariable Long id) {
+    public ResponseEntity<PublicationResponse> getPublicationById(@PathVariable Long id) {
         return ResponseEntity.ok(mapper.toResponse(queryItems.getPublicById(id)));
     }
 
     @GetMapping("/me")
     public ResponseEntity<List<PublicationResponse>> getMyPublications(@AuthenticationPrincipal Jwt jwt) {
         List<PublicationResponse> items = queryItems.getBySellerId(userId(jwt)).stream()
+                .map(mapper::toResponse)
+                .toList();
+        return ResponseEntity.ok(items);
+    }
+
+    @GetMapping("/me/storage")
+    public ResponseEntity<List<PublicationResponse>> getMyStorageItems(@AuthenticationPrincipal Jwt jwt) {
+        List<PublicationResponse> items = queryItems.getByStorageItemBySellerId(userId(jwt)).stream()
                 .map(mapper::toResponse)
                 .toList();
         return ResponseEntity.ok(items);

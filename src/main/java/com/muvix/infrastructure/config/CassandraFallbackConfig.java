@@ -51,19 +51,19 @@ public class CassandraFallbackConfig {
     public CatalogProjectionPort catalogProjectionPortFallback() {
         return new CatalogProjectionPort() {
             @Override
-            public void projectProductToCatalog(Product product, String zone, Long boxId) {
+            public void projectProductToCatalog(Product product, Long boxId) {
             }
 
             @Override
-            public void projectBatchToCatalog(Batch batch, String zone) {
+            public void projectBatchToCatalog(Batch batch) {
             }
 
             @Override
-            public void updateDynamicPriceInCatalog(Long itemId, String zone, BigDecimal newPrice) {
+            public void updateDynamicPriceInCatalog(Long itemId, BigDecimal newPrice) {
             }
 
             @Override
-            public void removeFromCatalog(Long itemId, String zone) {
+            public void removeFromCatalog(Long itemId) {
             }
         };
     }
@@ -87,7 +87,7 @@ public class CassandraFallbackConfig {
                 new Class<?>[]{repoInterface},
                 (proxy, method, args) -> switch (method.getName()) {
                     case "hashCode" -> System.identityHashCode(proxy);
-                    case "equals" -> args != null && args.length > 0 && proxy == args;
+                    case "equals" -> args != null && args.length > 0 && proxy == args[0];
                     case "toString" -> repoInterface.getSimpleName() + "Fallback";
                     default -> {
                         if (method.getReturnType().equals(List.class)) yield List.of();

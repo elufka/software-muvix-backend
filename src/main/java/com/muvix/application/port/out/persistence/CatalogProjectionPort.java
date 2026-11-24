@@ -10,11 +10,11 @@ import java.math.BigDecimal;
  */
 public interface CatalogProjectionPort {
 
-    void projectProductToCatalog(Product product, String zone, Long boxId);
+    void projectProductToCatalog(Product product, Long boxId);
 
-    void projectBatchToCatalog(Batch batch, String zone);
+    void projectBatchToCatalog(Batch batch);
 
-    void updateDynamicPriceInCatalog(Long itemId, String zone, BigDecimal newPrice);
+    void updateDynamicPriceInCatalog(Long itemId, BigDecimal newPrice);
 
-    void removeFromCatalog(Long itemId, String zone);
+    void removeFromCatalog(Long itemId);
 }

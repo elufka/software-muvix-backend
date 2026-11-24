@@ -1,27 +1,17 @@
 package com.muvix.infrastructure.adapters.out.persistence.mysql.entity;
 
-import jakarta.persistence.CollectionTable;
-import jakarta.persistence.Column;
-import jakarta.persistence.ElementCollection;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OrderColumn;
-import jakarta.persistence.Table;
+import com.muvix.domain.model.management.enums.BoxRole;
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Entity
 @Table(name = "relocation_events")
+@Getter @Setter
 public class RelocationEventJpaEntity {
 
     @Id
@@ -71,10 +61,15 @@ public class RelocationEventJpaEntity {
     @OrderColumn(name = "rule_order")
     private List<DiscountRuleJpaValue> discountRules = new ArrayList<>();
 
-    @ElementCollection
-    @CollectionTable(name = "relocation_event_shared_users", joinColumns = @JoinColumn(name = "event_id"))
-    @Column(name = "user_id", nullable = false)
-    private Set<Long> sharedUserIds = new HashSet<>();
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(
+            name = "relocation_event_participants",
+            joinColumns = @JoinColumn(name = "event_id")
+    )
+    @MapKeyColumn(name = "user_id")
+    @Column(name = "role", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private Map<Long, BoxRole> participants = new HashMap<>();
 
     @ElementCollection
     @CollectionTable(name = "relocation_event_items", joinColumns = @JoinColumn(name = "event_id"))
@@ -84,36 +79,5 @@ public class RelocationEventJpaEntity {
     public enum EventTypeJpa { SALE, PURCHASE, FULL_RELOCATION }
     public enum StatusJpa { DRAFT, ACTIVE, COMPLETED, CANCELLED }
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-    public EventTypeJpa getEventType() { return eventType; }
-    public void setEventType(EventTypeJpa eventType) { this.eventType = eventType; }
-    public Long getUserId() { return userId; }
-    public void setUserId(Long userId) { this.userId = userId; }
-    public String getTitle() { return title; }
-    public void setTitle(String title) { this.title = title; }
-    public String getShareToken() { return shareToken; }
-    public void setShareToken(String shareToken) { this.shareToken = shareToken; }
-    public StatusJpa getStatus() { return status; }
-    public void setStatus(StatusJpa status) { this.status = status; }
-    public String getOriginZone() { return originZone; }
-    public void setOriginZone(String originZone) { this.originZone = originZone; }
-    public String getOriginExactAddress() { return originExactAddress; }
-    public void setOriginExactAddress(String originExactAddress) { this.originExactAddress = originExactAddress; }
-    public String getDestinationZone() { return destinationZone; }
-    public void setDestinationZone(String destinationZone) { this.destinationZone = destinationZone; }
-    public String getDestinationExactAddress() { return destinationExactAddress; }
-    public void setDestinationExactAddress(String destinationExactAddress) { this.destinationExactAddress = destinationExactAddress; }
-    public Instant getSaleDeadline() { return saleDeadline; }
-    public void setSaleDeadline(Instant saleDeadline) { this.saleDeadline = saleDeadline; }
-    public Instant getArrivalDeliveryDate() { return arrivalDeliveryDate; }
-    public void setArrivalDeliveryDate(Instant arrivalDeliveryDate) { this.arrivalDeliveryDate = arrivalDeliveryDate; }
-    public BigDecimal getTakeItAllPrice() { return takeItAllPrice; }
-    public void setTakeItAllPrice(BigDecimal takeItAllPrice) { this.takeItAllPrice = takeItAllPrice; }
-    public List<DiscountRuleJpaValue> getDiscountRules() { return discountRules; }
-    public void setDiscountRules(List<DiscountRuleJpaValue> discountRules) { this.discountRules = discountRules; }
-    public Set<Long> getSharedUserIds() { return sharedUserIds; }
-    public void setSharedUserIds(Set<Long> sharedUserIds) { this.sharedUserIds = sharedUserIds; }
-    public Set<Long> getItemIds() { return itemIds; }
-    public void setItemIds(Set<Long> itemIds) { this.itemIds = itemIds; }
+
 }

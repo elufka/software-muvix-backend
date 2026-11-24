@@ -198,9 +198,15 @@ public class PlaceOrderService implements PlaceOrderUseCase {
 
         User sellerUser = users.findById(seller).orElseThrow(() -> new DomainException("Seller not found"));
 
-        Order pendingOrder = new Order(null, eventId, buyerId, buyer.getName(), sellerUser.getName(),
+        Order pendingOrder = new Order(
+                null,
+                eventId,
+                buyerId,
+                buyer.getFirstName() + buyer.getLastName(),
+                sellerUser.getFirstName() + sellerUser.getLastName(),
                 Set.copyOf(selected.stream().map(SellableItem::getId).toList()), total,
                 origin, Order.DeliveryMethod.PICKUP, null, Order.Status.PENDING_SLOT);
+
         pendingOrder.recordSourceBatchIds(sourceBatchIds);
 
         Order order = orders.save(pendingOrder);

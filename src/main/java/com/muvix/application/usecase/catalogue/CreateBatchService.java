@@ -44,7 +44,7 @@ public class CreateBatchService implements CreateBatchUseCase {
 
             // Si el producto individual es público, se proyecta también de forma aislada en Cassandra
             if (saved.isPublic()) {
-                catalogProjectionPort.projectProductToCatalog(saved, command.zone(), null);
+                catalogProjectionPort.projectProductToCatalog(saved, null);
             }
         }
 
@@ -58,7 +58,7 @@ public class CreateBatchService implements CreateBatchUseCase {
 
         // 3. Proyectar el Lote completo en Cassandra
         if (savedBatch.isPublic()) {
-            catalogProjectionPort.projectBatchToCatalog(savedBatch, command.zone());
+            catalogProjectionPort.projectBatchToCatalog(savedBatch);
         }
 
         return savedBatch;
@@ -83,7 +83,7 @@ public class CreateBatchService implements CreateBatchUseCase {
 
         // 3. Proyectar el Lote en Cassandra
         if (savedBatch.isPublic()) {
-            catalogProjectionPort.projectBatchToCatalog(savedBatch, command.zone());
+            catalogProjectionPort.projectBatchToCatalog(savedBatch);
         }
 
         return savedBatch;

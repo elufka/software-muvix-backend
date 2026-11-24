@@ -16,7 +16,6 @@ public interface CreateProductUseCase {
             BigDecimal price, // 0 = Privado, >0 = Público
             @NotBlank String category,
             ProductCondition condition,
-            String zone,
             List<String> images,
             Long boxId // Opcional: Vincular directamente a una Box al crear
     ) {}

@@ -14,7 +14,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
 @Component
-public class CatalogProjectionCassandraAdapter implements CatalogProjectionPort {
+public class CatalogProjectionCassandraAdapter {/*
 
     private final CatalogItemCassandraRepository repository;
     private final Clock clock;
@@ -88,5 +88,5 @@ public class CatalogProjectionCassandraAdapter implements CatalogProjectionPort 
 
     private static void requireZone(String zone) {
         if (zone == null || zone.isBlank()) throw new DomainException("Catalog zone is required");
-    }
+    }*/
 }

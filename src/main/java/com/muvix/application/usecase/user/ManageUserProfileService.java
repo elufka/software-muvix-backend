@@ -32,7 +32,16 @@ public class ManageUserProfileService implements ManageUserProfileUseCase {
         if (!user.getEmail().equals(command.email()) && userRepository.existsByEmail(command.email())) {
             throw new DomainException("An account with this email already exists");
         }
-        user.updateProfile(command.name(), command.email(), command.phone());
+        user.updateProfile(
+                command.firstName(),
+                command.lastName(),
+                command.email(),
+                command.phone(),
+                command.country(),
+                command.province(),
+                command.city(),
+                command.address()
+        );
         return userRepository.save(user);
     }
 }

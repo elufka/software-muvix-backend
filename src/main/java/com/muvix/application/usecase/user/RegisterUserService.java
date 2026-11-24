@@ -35,7 +35,19 @@ public class RegisterUserService implements RegisterUserUseCase {
             throw new DomainException("An account with this email already exists");
         }
 
-        User user = userRepository.save(new User(null, command.name(), command.email(), command.phone()));
+        User user = userRepository.save(new User(
+                null,
+                command.photo(),
+                command.firstName(),
+                command.lastName(),
+                command.email(),
+                command.phone(),
+                command.country(),
+                command.province(),
+                command.city(),
+                command.address(),
+                User.Role.USER
+        ));
         authenticationPort.storeCredentials(
                 user.getId(),
                 passwordEncoder.encode(command.password()),
