@@ -14,4 +14,6 @@ public interface OrderSpringDataJpaRepository extends JpaRepository<OrderJpaEnti
     List<OrderJpaEntity> findByEventIdIn(List<Long> eventIds);
 
     List<OrderJpaEntity> findByStatusAndDeliveredAtBefore(OrderJpaEntity.StatusJpa status, java.time.Instant deliveredBefore);
+
+    List<OrderJpaEntity> findByStatusAndCreatedAtBefore(OrderJpaEntity.StatusJpa status,java.time.Instant createdBefore);
 }

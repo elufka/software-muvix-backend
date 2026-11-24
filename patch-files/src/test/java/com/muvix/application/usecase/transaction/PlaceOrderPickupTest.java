@@ -88,6 +88,7 @@ class PlaceOrderPickupTest {
         }
         @Override public Optional<Order> findById(Long id) { return Optional.empty(); }
         @Override public List<Order> findDeliveredBefore(Instant at) { return List.of(); }
+        @Override public List<Order> findPendingSlotBefore(Instant createdBefore) { return List.of(); }
     }
 
     private static final class FakeSlots implements PickupSlotRepositoryPort {

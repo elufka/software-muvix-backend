@@ -1,7 +1,6 @@
 package com.muvix.domain.model.event;
 
 import java.math.BigDecimal;
-import java.time.Instant;
 
 public class OfferAcceptedEvent extends DomainEvent {
     private Long offerId;

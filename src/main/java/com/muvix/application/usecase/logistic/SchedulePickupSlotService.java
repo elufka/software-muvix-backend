@@ -81,7 +81,7 @@ public class SchedulePickupSlotService implements SchedulePickupSlotUseCase {
     }
     private Long sellerId(Order order) {
         List<Long> sellers = order.getItemIds().stream().map(id -> items.findById(id)
-                .orElseThrow(() -> new DomainException("Order item not found")))
+                        .orElseThrow(() -> new DomainException("Order item not found")))
                 .map(SellableItem::getSellerId).distinct().toList();
         if (sellers.size() != 1) throw new DomainException("Order must belong to one seller");
         return sellers.get(0);

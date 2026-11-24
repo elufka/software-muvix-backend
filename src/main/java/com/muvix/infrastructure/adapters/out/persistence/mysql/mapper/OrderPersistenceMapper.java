@@ -14,7 +14,7 @@ public final class OrderPersistenceMapper {
         AuthorizedPickupPersonEmbeddable persistedPerson = entity.getAuthorizedPerson();
         AuthorizedPickupPerson person = persistedPerson == null ? null
                 : new AuthorizedPickupPerson(persistedPerson.getFullName(),
-                        persistedPerson.getDocumentId(), persistedPerson.getPhone());
+                persistedPerson.getDocumentId(), persistedPerson.getPhone());
         return Order.restore(
                 entity.getId(),
                 entity.getEventId(),
@@ -30,14 +30,18 @@ public final class OrderPersistenceMapper {
                 Order.Status.valueOf(entity.getStatus().name()),
                 person,
                 entity.getPickupPinHash(),
-                entity.getDeliveredAt()
+                entity.getDeliveredAt(),
+                entity.getCreatedAt()
         );
     }
 
     public static OrderJpaEntity toEntity(Order order) {
         if (order == null) return null;
+
         OrderJpaEntity entity = new OrderJpaEntity();
+
         entity.setId(order.getId());
+        entity.setCreatedAt(order.getCreatedAt());
         entity.setEventId(order.getEventId());
         entity.setBuyerId(order.getBuyerId());
         entity.setBuyerName(order.getBuyerName());
@@ -50,6 +54,7 @@ public final class OrderPersistenceMapper {
         entity.setStatus(OrderJpaEntity.StatusJpa.valueOf(order.getStatus().name()));
         entity.setSlotId(order.getSlotId());
         entity.setDeliveredAt(order.getDeliveredAt());
+
         if (order.getAuthorizedPickupPerson() == null) {
             entity.setAuthorizedPerson(null);
         } else {
@@ -60,7 +65,9 @@ public final class OrderPersistenceMapper {
             persistedPerson.setPhone(person.phone());
             entity.setAuthorizedPerson(persistedPerson);
         }
+
         entity.setPickupPinHash(order.getPickupPinHash());
+
         return entity;
     }
 }

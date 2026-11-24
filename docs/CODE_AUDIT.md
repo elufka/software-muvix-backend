@@ -81,7 +81,7 @@ El código sigue una intención hexagonal (`application.port.*`, servicios de ca
 - **Adapter/Repository:** puertos para persistence de negocio y adaptadores JPA/Cassandra/Mobbex.
 - **Factory:** `EscrowGatewayFactory` selecciona implementación financiera por proveedor.
 - **State:** las transiciones de orden, escrow, disputa, artículo y cuenta expresan lifecycle con estados.
-- **Domain events:** se conservan eventos para disputa/aceptación y publicación Spring.
+- **Domain boxRepositoryPort:** se conservan eventos para disputa/aceptación y publicación Spring.
 - **SOLID/GRASP:** DIP en gateways y repositorios; Information Expert en validación de dominio de `SellableItem`, `Batch`, `Order` y `Dispute`; Controller como coordinador HTTP; baja acoplación al evitar IDs de actor enviados por cliente en los endpoints nuevos.
 
 ## Deuda y límites

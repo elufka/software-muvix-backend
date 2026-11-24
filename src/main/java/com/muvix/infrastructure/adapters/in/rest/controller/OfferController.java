@@ -15,15 +15,18 @@ import java.math.BigDecimal;
 public class OfferController {
     private final ManageOfferUseCase manageOffers;
     private final PlaceOrderUseCase placeOrder;
+
     public OfferController(ManageOfferUseCase manageOffers, PlaceOrderUseCase placeOrder) {
         this.manageOffers = manageOffers; this.placeOrder = placeOrder;
     }
+
     @PostMapping
     public ResponseEntity<Offer> create(@AuthenticationPrincipal Jwt jwt, @RequestBody CreateOfferRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(manageOffers.create(
                 new ManageOfferUseCase.CreateOfferCommand(Long.valueOf(jwt.getSubject()), request.itemId(), request.amount())));
     }
-    @PostMapping("/{offerId}/accept")
+
+    @PostMapping("/{offerId}/accept") // cambiar, mucha logica para un controller
     public ResponseEntity<OrderController.CheckoutResponse> accept(@AuthenticationPrincipal Jwt jwt,
                                                                    @PathVariable Long offerId,
                                                                    @RequestBody(required = false) PickupProposalRequest request) {
@@ -33,15 +36,33 @@ public class OfferController {
                 new PlaceOrderUseCase.AcceptOfferPurchaseCommand(Long.valueOf(jwt.getSubject()), offerId, pickupSlot));
         return ResponseEntity.status(HttpStatus.CREATED).body(OrderController.toCheckoutResponse(result));
     }
+
+    @PostMapping("/{offerId}/counter")
+    public ResponseEntity<Offer> counter(@AuthenticationPrincipal Jwt jwt,@PathVariable Long offerId,@RequestBody CounterOfferRequest request){
+        return ResponseEntity.ok(manageOffers.counter(offerId,Long.valueOf(jwt.getSubject()),request.amount()));
+    }
+
+    @PostMapping("/{offerId}/accept-counter")
+    public ResponseEntity<OrderController.CheckoutResponse> acceptCounter(@AuthenticationPrincipal Jwt jwt,@PathVariable Long offerId){
+        PlaceOrderUseCase.CheckoutResult result=placeOrder.executeOfferPurchase(new PlaceOrderUseCase.AcceptOfferPurchaseCommand(Long.valueOf(jwt.getSubject()),offerId));
+        return ResponseEntity.status(HttpStatus.CREATED).body(OrderController.toCheckoutResponse(result));
+    }
+
+    @PostMapping("/{offerId}/reject-counter")
+    public ResponseEntity<Offer> rejectCounter(@AuthenticationPrincipal Jwt jwt,@PathVariable Long offerId){return ResponseEntity.ok(manageOffers.rejectCounter(offerId,Long.valueOf(jwt.getSubject())));}
+
     @PostMapping("/{offerId}/reject")
     public ResponseEntity<Offer> reject(@AuthenticationPrincipal Jwt jwt, @PathVariable Long offerId) {
         return ResponseEntity.ok(manageOffers.reject(offerId, Long.valueOf(jwt.getSubject())));
     }
+
     @GetMapping("/{offerId}")
     public ResponseEntity<Offer> get(@AuthenticationPrincipal Jwt jwt,@PathVariable Long offerId){
         return ResponseEntity.ok(manageOffers.get(offerId,Long.valueOf(jwt.getSubject())));
     }
+
     public record CreateOfferRequest(Long itemId, BigDecimal amount) {}
+    public record CounterOfferRequest(BigDecimal amount) {}
     public record PickupProposalRequest(java.time.Instant pickupStartTime, java.time.Instant pickupEndTime,
                                         com.muvix.domain.model.logistic.AuthorizedPickupPerson authorizedPerson) {}
 }

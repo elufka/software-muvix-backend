@@ -6,8 +6,7 @@ import com.muvix.infrastructure.adapters.out.persistence.mysql.entity.EscrowAcco
 
 public final class EscrowPersistenceMapper {
 
-    private EscrowPersistenceMapper() {
-    }
+    private EscrowPersistenceMapper() {}
 
     public static EscrowAccount toDomain(EscrowAccountJpaEntity entity) {
 
@@ -23,7 +22,8 @@ public final class EscrowPersistenceMapper {
                 ),
                 entity.getExternalOperationId(),
                 entity.getFundedAt(),
-                entity.getAccreditedAt()
+                entity.getAccreditedAt(),
+                entity.getCheckoutUrl()
         );
     }
 
@@ -45,6 +45,7 @@ public final class EscrowPersistenceMapper {
         );
 
         entity.setExternalOperationId(domain.getExternalOperationId());
+        entity.setCheckoutUrl(domain.getCheckoutUrl());
         entity.setFundedAt(domain.getFundedAt());
         entity.setAccreditedAt(domain.getAccreditedAt());
 

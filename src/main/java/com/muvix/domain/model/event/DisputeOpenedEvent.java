@@ -1,7 +1,5 @@
 package com.muvix.domain.model.event;
 
-import java.time.Instant;
-
 public class DisputeOpenedEvent extends DomainEvent {
     private Long disputeId;
     private Long orderId;

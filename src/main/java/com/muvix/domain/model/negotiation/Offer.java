@@ -13,7 +13,7 @@ import java.util.List;
 
 public class Offer {
 
-    public enum Status { PENDING, ACCEPTED, REJECTED }
+    public enum Status { PENDING, COUNTERED, ACCEPTED, REJECTED }
 
     private final Long id;
     private final Long itemId;
@@ -21,6 +21,8 @@ public class Offer {
     private final BigDecimal amount;
     private final Instant createdAt;
     private Status status;
+    private java.math.BigDecimal counterAmount;
+    private boolean counterAccepted;
 
     private final List<DomainEvent> domainEvents = new ArrayList<>();
 
@@ -53,13 +55,34 @@ public class Offer {
         this.domainEvents.add(new OfferAcceptedEvent(id, itemId, buyerId, amount));
     }
 
-    public void reject() {
+    public void counter(java.math.BigDecimal amount) {
         requirePending();
+        if (amount == null || amount.signum() <= 0) throw new DomainException("Counter offer must be greater than zero");
+        this.counterAmount = amount;
+        this.status = Status.COUNTERED;
+    }
+
+    public void acceptCounter(Long actorId) {
+        if (status != Status.COUNTERED) throw new DomainException("There is no seller counteroffer to accept");
+        if (!buyerId.equals(actorId)) throw new DomainException("Only the buyer can accept a counteroffer");
+        this.counterAccepted = true;
+        this.status = Status.ACCEPTED;
+        this.domainEvents.add(new OfferAcceptedEvent(id,itemId,buyerId,counterAmount));
+    }
+
+    public void reject() {
+        if (status != Status.PENDING && status != Status.COUNTERED) throw new DomainException("Offer has already been resolved");
         this.status = Status.REJECTED;
     }
 
     public static Offer restore(Long id, Long itemId, Long buyerId, BigDecimal amount, Instant createdAt, Status status) {
         return new Offer(id, itemId, buyerId, amount, createdAt, status);
+    }
+
+    public static Offer restore(Long id, Long itemId, Long buyerId, BigDecimal amount, Instant createdAt, Status status,
+                                BigDecimal counterAmount, boolean counterAccepted) {
+        Offer offer = new Offer(id,itemId,buyerId,amount,createdAt,status);
+        offer.counterAmount=counterAmount;offer.counterAccepted=counterAccepted;return offer;
     }
 
     private void requirePending() {
@@ -77,6 +100,9 @@ public class Offer {
     public Long getItemId() { return itemId; }
     public Long getBuyerId() { return buyerId; }
     public BigDecimal getAmount() { return amount; }
+    public BigDecimal getAgreedAmount() { return counterAccepted ? counterAmount : amount; }
+    public BigDecimal getCounterAmount() { return counterAmount; }
+    public boolean isCounterAccepted() { return counterAccepted; }
     public Instant getCreatedAt() { return createdAt; }
     public Status getStatus() { return status; }
 }

@@ -30,6 +30,19 @@ public class CancelOrderService implements CancelOrderUseCase {
     public void cancelByBuyer(Long orderId, Long buyerId) {
         Order order=orders.findById(orderId).orElseThrow(()->new DomainException("Order not found"));
         if(!order.getBuyerId().equals(buyerId))throw new DomainException("Only the buyer can cancel this order");
+        cancel(order);
+    }
+
+    @Override @Transactional
+    public boolean cancelExpiredPendingSlot(Long orderId,java.time.Instant createdBefore){
+        Order order=orders.findById(orderId).orElseThrow(()->new DomainException("Order not found"));
+        if(order.getStatus()!=Order.Status.PENDING_SLOT||order.getCreatedAt().isAfter(createdBefore))return false;
+        cancel(order);
+        return true;
+    }
+
+    private void cancel(Order order){
+        Long orderId=order.getId();
         if(slots.findLatestByOrderId(orderId).map(slot -> slot.isSellerConfirmed()).orElse(false))
             throw new DomainException("Order cannot be cancelled after the seller confirms pickup");
         order.cancelBeforeSellerPickup();

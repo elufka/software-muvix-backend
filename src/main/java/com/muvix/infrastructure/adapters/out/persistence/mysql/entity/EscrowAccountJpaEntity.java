@@ -22,6 +22,9 @@ public class EscrowAccountJpaEntity {
     @Column(name = "external_operation_id", unique = true)
     private String externalOperationId;
 
+    @Column(name="checkout_url",length=2000)
+    private String checkoutUrl;
+
     @Column(name = "funded_at", nullable = false)
     private Instant fundedAt;
 
@@ -71,6 +74,8 @@ public class EscrowAccountJpaEntity {
     public void setExternalOperationId(String externalOperationId) {
         this.externalOperationId = externalOperationId;
     }
+    public String getCheckoutUrl(){return checkoutUrl;}
+    public void setCheckoutUrl(String checkoutUrl){this.checkoutUrl=checkoutUrl;}
 
     public Instant getFundedAt() {
         return fundedAt;

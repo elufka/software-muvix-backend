@@ -11,6 +11,7 @@ public class EscrowAccount {
     private final BigDecimal amount;
     private EscrowStatus status;
     private String externalOperationId;
+    private String checkoutUrl;
     private Instant fundedAt;
     private Instant accreditedAt;
 
@@ -34,6 +35,12 @@ public class EscrowAccount {
         account.fundedAt = fundedAt;
         account.accreditedAt = accreditedAt;
         return account;
+    }
+
+    public static EscrowAccount restore(Long orderId,BigDecimal amount,EscrowStatus status,String externalOperationId,
+                                        Instant fundedAt,Instant accreditedAt,String checkoutUrl){
+        EscrowAccount account=restore(orderId,amount,status,externalOperationId,fundedAt,accreditedAt);
+        account.checkoutUrl=checkoutUrl;return account;
     }
 
     public void markAsAccreditedToSeller() {
@@ -102,6 +109,12 @@ public class EscrowAccount {
         this.externalOperationId = operationId;
     }
 
+    public void attachCheckout(String operationId,String checkoutUrl){
+        attachExternalOperationId(operationId);
+        if(checkoutUrl==null||checkoutUrl.isBlank())throw new IllegalArgumentException("Checkout URL is required");
+        this.checkoutUrl=checkoutUrl;
+    }
+
     public void cancelUnpaid() {
         if (status != EscrowStatus.PENDING_PAYMENT) throw new IllegalStateException("Only unpaid escrow can be cancelled without refund");
         status = EscrowStatus.CANCELLED;
@@ -120,6 +133,7 @@ public class EscrowAccount {
     public BigDecimal getAmount() { return amount; }
     public EscrowStatus getStatus() { return status; }
     public String getExternalOperationId() { return externalOperationId; }
+    public String getCheckoutUrl() { return checkoutUrl; }
     public Instant getFundedAt() { return fundedAt; }
     public Instant getAccreditedAt() { return accreditedAt; }
 }

@@ -1,7 +1,7 @@
 package com.muvix.application.usecase.event;
 
 import com.muvix.application.port.in.event.ManageBoxUseCase;
-import com.muvix.application.port.out.persistence.RelocationEventRepositoryPort;
+import com.muvix.application.port.out.persistence.BoxRepositoryPort;
 import com.muvix.application.port.out.persistence.SellableItemRepositoryPort;
 import com.muvix.domain.model.catalogue.SellableItem;
 import com.muvix.domain.model.exception.DomainException;
@@ -15,10 +15,10 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class ManageBoxService implements ManageBoxUseCase {
 
-    private final RelocationEventRepositoryPort boxRepositoryPort;
+    private final BoxRepositoryPort boxRepositoryPort;
     private final SellableItemRepositoryPort itemRepositoryPort;
 
-    public ManageBoxService(RelocationEventRepositoryPort boxRepositoryPort,
+    public ManageBoxService(BoxRepositoryPort boxRepositoryPort,
                             SellableItemRepositoryPort itemRepositoryPort) {
         this.boxRepositoryPort = boxRepositoryPort;
         this.itemRepositoryPort = itemRepositoryPort;

@@ -22,8 +22,8 @@ public interface PlaceOrderUseCase {
         public TakeItAllPurchaseCommand(Long buyerId, Long eventId) { this(buyerId, eventId, null); }
     }
 
-    record AcceptOfferPurchaseCommand(Long sellerId, Long offerId, PickupSlotProposal pickupSlot) {
-        public AcceptOfferPurchaseCommand(Long sellerId, Long offerId) { this(sellerId, offerId, null); }
+    record AcceptOfferPurchaseCommand(Long actorId, Long offerId, PickupSlotProposal pickupSlot) {
+        public AcceptOfferPurchaseCommand(Long actorId, Long offerId) { this(actorId, offerId, null); }
     }
 
     CheckoutResult executeDirectPurchase(DirectPurchaseCommand command);

@@ -1,7 +1,7 @@
 package com.muvix.application.usecase.event;
 
 import com.muvix.application.port.in.event.CreateRelocationEventUseCase;
-import com.muvix.application.port.out.persistence.RelocationEventRepositoryPort;
+import com.muvix.application.port.out.persistence.BoxRepositoryPort;
 import com.muvix.domain.model.management.FullRelocationBox;
 import com.muvix.domain.model.management.PurchaseBox;
 import com.muvix.domain.model.management.Box;
@@ -12,9 +12,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class CreateRelocationEventService implements CreateRelocationEventUseCase {
 
-    private final RelocationEventRepositoryPort eventRepository;
+    private final BoxRepositoryPort eventRepository;
 
-    public CreateRelocationEventService(RelocationEventRepositoryPort eventRepository) {
+    public CreateRelocationEventService(BoxRepositoryPort eventRepository) {
         this.eventRepository = eventRepository;
     }
 

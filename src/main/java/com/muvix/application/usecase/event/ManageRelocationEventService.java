@@ -1,14 +1,14 @@
 package com.muvix.application.usecase.event;
 import com.muvix.application.port.in.event.ManageRelocationEventUseCase;
-import com.muvix.application.port.out.persistence.RelocationEventRepositoryPort;
+import com.muvix.application.port.out.persistence.BoxRepositoryPort;
 import com.muvix.domain.model.exception.DomainException;
 import com.muvix.domain.model.management.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 @Service
 public class ManageRelocationEventService implements ManageRelocationEventUseCase {
-    private final RelocationEventRepositoryPort events;
-    public ManageRelocationEventService(RelocationEventRepositoryPort events){this.events=events;}
+    private final BoxRepositoryPort events;
+    public ManageRelocationEventService(BoxRepositoryPort events){this.events=events;}
     @Override @Transactional(readOnly=true) public Box get(Long id,Long userId){
         Box event=find(id); if(!event.isMember(userId))throw new DomainException("You cannot access this event"); return event;
     }

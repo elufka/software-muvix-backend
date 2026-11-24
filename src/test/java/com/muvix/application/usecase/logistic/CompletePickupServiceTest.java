@@ -93,6 +93,11 @@ class CompletePickupServiceTest {
         @Override public Order save(Order value) { saveCount++; return value; }
         @Override public Optional<Order> findById(Long id) { return Optional.of(order); }
         @Override public List<Order> findDeliveredBefore(Instant deliveredBefore) { return List.of(); }
+
+        @Override
+        public List<Order> findPendingSlotBefore(Instant createdBefore) {
+            return List.of();
+        }
     }
 
     private static final class FakeSlots implements PickupSlotRepositoryPort {

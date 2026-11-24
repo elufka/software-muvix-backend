@@ -1,6 +1,6 @@
 package com.muvix.infrastructure.adapters.out.persistence.mysql.adapter;
 
-import com.muvix.application.port.out.persistence.RelocationEventRepositoryPort;
+import com.muvix.application.port.out.persistence.BoxRepositoryPort;
 import com.muvix.domain.model.exception.DomainException;
 import com.muvix.domain.model.management.Box;
 import com.muvix.infrastructure.adapters.out.persistence.mysql.entity.RelocationEventJpaEntity;
@@ -14,11 +14,11 @@ import java.util.Optional;
 
 @Component
 @Transactional
-public class RelocationEventMySQLAdapter implements RelocationEventRepositoryPort {
+public class BoxMySQLAdapter implements BoxRepositoryPort {
 
     private final RelocationEventJpaRepository repository;
 
-    public RelocationEventMySQLAdapter(RelocationEventJpaRepository repository) {
+    public BoxMySQLAdapter(RelocationEventJpaRepository repository) {
         this.repository = repository;
     }
 

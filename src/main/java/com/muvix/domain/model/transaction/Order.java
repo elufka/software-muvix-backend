@@ -23,6 +23,7 @@ public class Order {
     private final BigDecimal total;
     private final Origin origin;
     private final DeliveryMethod deliveryMethod;
+    private Instant createdAt;
     private Long slotId;
     private Status status;
 
@@ -53,6 +54,7 @@ public class Order {
         this.deliveryMethod = deliveryMethod == null ? DeliveryMethod.PICKUP : deliveryMethod;
         this.slotId = slotId;
         this.status = status == null ? Status.PENDING_SLOT : status;
+        this.createdAt = Instant.now();
     }
 
     public static Order restore(Long id, Long eventId, Long buyerId, Set<Long> itemIds, BigDecimal total,
@@ -71,6 +73,17 @@ public class Order {
         order.authorizedPickupPerson = authorizedPickupPerson;
         order.pickupPinHash = pickupPinHash;
         order.deliveredAt = deliveredAt;
+        return order;
+    }
+
+    public static Order restore(Long id,Long eventId,Long buyerId,String buyerName,String sellerName,Set<Long> itemIds,
+                                Set<Long> sourceBatchIds,BigDecimal total,Origin origin,DeliveryMethod deliveryMethod,
+                                Long slotId,Status status,AuthorizedPickupPerson authorizedPickupPerson,String pickupPinHash,
+                                Instant deliveredAt,Instant createdAt){
+
+        Order order=restore(id,eventId,buyerId,buyerName,sellerName,itemIds,sourceBatchIds,total,origin,deliveryMethod,slotId,status,authorizedPickupPerson,pickupPinHash,deliveredAt);
+
+        if(createdAt!=null)order.createdAt=createdAt;
         return order;
     }
 
@@ -161,4 +174,5 @@ public class Order {
     public AuthorizedPickupPerson getAuthorizedPickupPerson() { return authorizedPickupPerson; }
     public String getPickupPinHash() { return pickupPinHash; }
     public Instant getDeliveredAt() { return deliveredAt; }
+    public Instant getCreatedAt() { return createdAt; }
 }

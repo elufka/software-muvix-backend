@@ -9,4 +9,5 @@ public interface OrderRepositoryPort {
     Order save(Order order);
     Optional<Order> findById(Long id);
     List<Order> findDeliveredBefore(Instant deliveredBefore);
+    List<Order> findPendingSlotBefore(Instant createdBefore);
 }

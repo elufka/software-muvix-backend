@@ -54,6 +54,7 @@ public class SecurityConfig {
                                 "/api/v1/auth/2fa/verify",
                                 "/api/v1/escrow/webhook/mobbex",
                                 "/api/v1/locations/**",
+                                "/ws-chat/**",
                                 "/error"
                         )
                         .permitAll()

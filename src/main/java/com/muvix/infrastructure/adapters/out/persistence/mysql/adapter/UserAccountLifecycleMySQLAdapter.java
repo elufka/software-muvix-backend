@@ -1,10 +1,9 @@
 package com.muvix.infrastructure.adapters.out.persistence.mysql.adapter;
 
-import com.muvix.application.port.out.persistence.RelocationEventRepositoryPort;
+import com.muvix.application.port.out.persistence.BoxRepositoryPort;
 import com.muvix.application.port.out.persistence.UserAccountLifecyclePort;
 import com.muvix.infrastructure.adapters.out.persistence.mysql.entity.EscrowAccountJpaEntity;
 import com.muvix.infrastructure.adapters.out.persistence.mysql.entity.OrderJpaEntity;
-import com.muvix.infrastructure.adapters.out.persistence.mysql.entity.SellableItemJpaEntity;
 import com.muvix.infrastructure.adapters.out.persistence.mysql.entity.UserJpaEntity;
 import com.muvix.infrastructure.adapters.out.persistence.mysql.repository.EscrowAccountSpringDataJpaRepository;
 import com.muvix.infrastructure.adapters.out.persistence.mysql.repository.OrderSpringDataJpaRepository;
@@ -29,13 +28,13 @@ public class UserAccountLifecycleMySQLAdapter implements UserAccountLifecyclePor
     private final OrderSpringDataJpaRepository orderRepository;
     private final EscrowAccountSpringDataJpaRepository escrowRepository;
     private final SellableItemJpaRepository itemRepository;
-    private final RelocationEventRepositoryPort eventRepository;
+    private final BoxRepositoryPort eventRepository;
 
     public UserAccountLifecycleMySQLAdapter(UserMysqlRepository userRepository,
                                            OrderSpringDataJpaRepository orderRepository,
                                            EscrowAccountSpringDataJpaRepository escrowRepository,
                                            SellableItemJpaRepository itemRepository,
-                                           RelocationEventRepositoryPort eventRepository) {
+                                           BoxRepositoryPort eventRepository) {
         this.userRepository = userRepository;
         this.orderRepository = orderRepository;
         this.escrowRepository = escrowRepository;

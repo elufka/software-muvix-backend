@@ -14,6 +14,9 @@ public class OrderJpaEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name="created_at",nullable=false)
+    private java.time.Instant createdAt;
+
     @Column(name = "event_id")
     private Long eventId;
 
@@ -71,6 +74,8 @@ public class OrderJpaEntity {
     // Getters y Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
+    public java.time.Instant getCreatedAt(){return createdAt;}
+    public void setCreatedAt(java.time.Instant createdAt){this.createdAt=createdAt;}
     public Long getEventId() { return eventId; }
     public void setEventId(Long eventId) { this.eventId = eventId; }
     public Long getBuyerId() { return buyerId; }
@@ -100,4 +105,3 @@ public class OrderJpaEntity {
     public Instant getDeliveredAt() { return deliveredAt; }
     public void setDeliveredAt(Instant deliveredAt) { this.deliveredAt = deliveredAt; }
 }
-

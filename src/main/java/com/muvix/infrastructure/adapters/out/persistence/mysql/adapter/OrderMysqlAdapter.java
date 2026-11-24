@@ -39,4 +39,13 @@ public class OrderMysqlAdapter implements OrderRepositoryPort {
         return repository.findByStatusAndDeliveredAtBefore(OrderJpaEntity.StatusJpa.DELIVERED, deliveredBefore)
                 .stream().map(OrderPersistenceMapper::toDomain).toList();
     }
+
+    @Override
+    @Transactional(readOnly=true)
+    public List<Order> findPendingSlotBefore(Instant createdBefore){
+        return repository.findByStatusAndCreatedAtBefore(OrderJpaEntity.StatusJpa.PENDING_SLOT,createdBefore)
+                .stream()
+                .map(OrderPersistenceMapper::toDomain)
+                .toList();
+    }
 }
